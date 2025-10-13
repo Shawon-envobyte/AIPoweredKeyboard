@@ -1,6 +1,9 @@
 package com.ai.keyboard.presentation.keyboard
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -10,7 +13,7 @@ import com.ai.keyboard.presentation.components.KeyRow
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardIntent
 
 @Composable
-fun SymbolKeyboard(
+fun ExtendedSymbolKeyboard(
     onIntent: (KeyboardIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -18,35 +21,35 @@ fun SymbolKeyboard(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        // Row 1
+        // Row 1: Mathematical and currency symbols
         KeyRow(
-            keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"),
+            keys = listOf("~", "`", "|", "•", "√", "π", "÷", "×", "¶", "∆"),
             onKeyPress = { key ->
                 onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(key)))
             }
         )
 
-        // Row 2
+        // Row 2: Extended punctuation and symbols
         KeyRow(
-            keys = listOf("-", "/", ":", ";", "(", ")", "$", "&", "@", "\""),
+            keys = listOf("£", "¢", "€", "¥", "^", "°", "=", "{", "}", "\\"),
             onKeyPress = { key ->
                 onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(key)))
             }
         )
 
-        // Row 3
+        // Row 3: More symbols with toggle back button
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Key(
-                text = "#+=",
-                onClick = { onIntent(KeyboardIntent.ExtendedSymbolPressed) },
+                text = "123",
+                onClick = { onIntent(KeyboardIntent.SymbolPressed) },
                 modifier = Modifier.weight(1.5f),
                 isSpecial = true
             )
 
-            listOf(".", ",", "?", "!", "'", "*", "+", "=").forEach { key ->
+            listOf("%", "©", "®", "™", "✓", "[", "]", "<", ">").forEach { key ->
                 Key(
                     text = key,
                     onClick = {
@@ -66,7 +69,7 @@ fun SymbolKeyboard(
             )
         }
 
-        // Row 4
+        // Row 4: Bottom row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp)

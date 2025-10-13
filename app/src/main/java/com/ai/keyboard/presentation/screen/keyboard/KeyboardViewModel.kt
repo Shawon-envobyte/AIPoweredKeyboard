@@ -93,6 +93,8 @@ class KeyboardViewModel(
             is KeyboardIntent.ShiftPressed -> toggleShift()
             is KeyboardIntent.SymbolPressed -> toggleSymbol()
             is KeyboardIntent.ThemeChanged -> changeTheme(intent.theme)
+            is KeyboardIntent.ExtendedSymbolPressed -> toggleExtendedSymbol()
+            is KeyboardIntent.AlphabetPressed -> toggleToNormalKeyboard()
             is KeyboardIntent.ToggleHaptic -> toggleHaptic()
             is KeyboardIntent.ToggleSound -> toggleSound()
             is KeyboardIntent.CursorPositionChanged -> updateCursorPosition(intent.position)
@@ -129,21 +131,25 @@ class KeyboardViewModel(
                 currentText = currentText.replaceRange(cursorPosition, cursorPosition, char)
                 cursorPosition += char.length
             }
+
             is KeyAction.Space -> {
                 val char = " "
                 currentText = currentText.replaceRange(cursorPosition, cursorPosition, char)
                 cursorPosition += char.length
             }
+
             is KeyAction.MoveCursor -> {
                 val newPosition = cursorPosition + action.amount
                 cursorPosition = newPosition.coerceIn(0, currentText.length)
                 textChanged = false
             }
+
             is KeyAction.InsertSuggestion -> {
                 currentText = currentText.replaceRange(cursorPosition, cursorPosition, action.text)
                 cursorPosition += action.text.length
             }
-            KeyAction.Shift, KeyAction.Symbol -> {
+
+            KeyAction.Shift, KeyAction.Symbol, KeyAction.ExtendedSymbol -> {
                 textChanged = false
             }
         }
@@ -173,7 +179,7 @@ class KeyboardViewModel(
         }
         onTextChangeListener?.invoke(text, text.length)
     }
-    
+
     private fun updateCursorPosition(position: Int) {
         updateKeyboardState { copy(cursorPosition = position) }
     }
@@ -211,6 +217,19 @@ class KeyboardViewModel(
             KeyboardMode.SYMBOLS
         }
         updateMode(newMode)
+    }
+
+    private fun toggleExtendedSymbol() {
+        val currentMode = _uiState.value.keyboardState.mode
+        val newMode = when (currentMode) {
+            KeyboardMode.EXTENDED_SYMBOLS -> KeyboardMode.SYMBOLS
+            else -> KeyboardMode.EXTENDED_SYMBOLS
+        }
+        updateMode(newMode)
+    }
+
+    private fun toggleToNormalKeyboard() {
+        updateMode(KeyboardMode.LOWERCASE)
     }
 
     private fun updateMode(mode: KeyboardMode) {

@@ -13,8 +13,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.ai.keyboard.domain.model.KeyboardMode
 import com.ai.keyboard.presentation.components.SuggestionBar
 import com.ai.keyboard.presentation.keyboard.AlphabeticKeyboard
+import com.ai.keyboard.presentation.keyboard.ExtendedSymbolKeyboard
+import com.ai.keyboard.presentation.keyboard.SymbolKeyboard
 import com.ai.keyboard.presentation.theme.AIKeyboardTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -58,11 +61,29 @@ fun KeyboardScreen(
             Spacer(modifier = Modifier.height(4.dp))
 
             // Keyboard Layout
-            AlphabeticKeyboard(
-                mode = uiState.keyboardState.mode,
-                onIntent = {viewModel.handleIntent(it)},
-                modifier = Modifier.fillMaxWidth()
-            )
+            when (uiState.keyboardState.mode) {
+                KeyboardMode.SYMBOLS -> {
+                    SymbolKeyboard(
+                        onIntent = { viewModel.handleIntent(it) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                KeyboardMode.EXTENDED_SYMBOLS -> {
+                    ExtendedSymbolKeyboard(
+                        onIntent = { viewModel.handleIntent(it) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                else -> {
+                    AlphabeticKeyboard(
+                        mode = uiState.keyboardState.mode,
+                        onIntent = { viewModel.handleIntent(it) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         }
     }
 }

@@ -9,6 +9,8 @@ sealed class KeyboardIntent {
     data class CursorPositionChanged(val position: Int) : KeyboardIntent()
     object ShiftPressed : KeyboardIntent()
     object SymbolPressed : KeyboardIntent()
+    object AlphabetPressed : KeyboardIntent()
+    object ExtendedSymbolPressed : KeyboardIntent()
     data class ThemeChanged(val theme: KeyboardTheme) : KeyboardIntent()
     object ToggleHaptic : KeyboardIntent()
     object ToggleSound : KeyboardIntent()
