@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
+import com.ai.keyboard.presentation.components.Backspace
 import com.ai.keyboard.presentation.components.Key
 import com.ai.keyboard.presentation.components.KeyRow
 import com.ai.keyboard.presentation.components.Space
@@ -67,13 +68,16 @@ fun AlphabeticKeyboard(
                 )
             }
 
-            Key(
+
+            Backspace(
+                modifier = Modifier.weight(1.5f),
                 text = "⌫",
                 onClick = {
                     onIntent(KeyboardIntent.KeyPressed(KeyAction.Backspace))
                 },
-                modifier = Modifier.weight(1.5f),
-                isSpecial = true
+                onRepeat = {
+                    onIntent(KeyboardIntent.KeyPressed(KeyAction.Backspace))
+                }
             )
         }
 
