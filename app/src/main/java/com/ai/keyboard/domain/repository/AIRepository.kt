@@ -1,5 +1,6 @@
 package com.ai.keyboard.domain.repository
 
+import com.ai.keyboard.core.util.ResultWrapper
 import com.ai.keyboard.domain.model.Suggestion
 
 interface AIRepository {
@@ -17,4 +18,10 @@ interface AIRepository {
     ): Result<List<String>>
 
     suspend fun getSmartReplies(message: String): Result<List<String>>
+
+    suspend fun rephraseContent(
+        content: String,
+        language: String,
+        tone: String
+    ): ResultWrapper<String>
 }

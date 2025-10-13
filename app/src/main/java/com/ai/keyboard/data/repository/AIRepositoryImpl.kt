@@ -1,13 +1,19 @@
 package com.ai.keyboard.data.repository
 
+import com.ai.keyboard.core.util.ResultWrapper
+import com.ai.keyboard.data.mapper.contentRephrasePrompt
+import com.ai.keyboard.data.mapper.contentRephraseSystemPrompt
+import com.ai.keyboard.data.mapper.toAPIRequest
 import com.ai.keyboard.data.source.local.CacheManager
 import com.ai.keyboard.data.source.local.LocalAIEngine
+import com.ai.keyboard.data.source.remote.api.APIDataSource
 import com.ai.keyboard.domain.model.Suggestion
 import com.ai.keyboard.domain.repository.AIRepository
 
 class AIRepositoryImpl(
     private val localAI: LocalAIEngine,
-    private val cache: CacheManager
+    private val cache: CacheManager,
+    private val remoteSource: APIDataSource
 ) : AIRepository {
 
     override suspend fun getSuggestions(
@@ -60,6 +66,25 @@ class AIRepositoryImpl(
             Result.success(replies)
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    override suspend fun rephraseContent(
+        content: String,
+        language: String,
+        tone: String
+    ): ResultWrapper<String> {
+        return try {
+            val response = remoteSource.getResponseFromAPI(
+                request = contentRephrasePrompt(
+                    content = content,
+                    language = language,
+                    tone = tone
+                ).toAPIRequest(contentRephraseSystemPrompt())
+            )
+            ResultWrapper.Success(response.candidates.first().content.parts.first().text)
+        } catch (e: Exception) {
+            ResultWrapper.Failure(e.message ?: "Unknown error")
         }
     }
 }

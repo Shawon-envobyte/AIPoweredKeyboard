@@ -2,14 +2,14 @@ package com.ai.keyboard.presentation.screen.keyboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ai.keyboard.core.util.ResultWrapper
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
 import com.ai.keyboard.domain.model.KeyboardState
 import com.ai.keyboard.domain.model.KeyboardTheme
 import com.ai.keyboard.domain.repository.SettingsRepository
-import com.ai.keyboard.domain.usecase.CorrectGrammarUseCase
 import com.ai.keyboard.domain.usecase.GetSuggestionsUseCase
-import com.ai.keyboard.domain.usecase.PredictNextWordUseCase
+import com.ai.keyboard.domain.usecase.RephraseContentUseCase
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,8 +23,7 @@ import kotlinx.coroutines.launch
 
 class KeyboardViewModel(
     private val getSuggestionsUseCase: GetSuggestionsUseCase,
-    private val predictNextWordUseCase: PredictNextWordUseCase,
-    private val correctGrammarUseCase: CorrectGrammarUseCase,
+    private val rephraseContentUseCase: RephraseContentUseCase,
     private val settingsRepository: SettingsRepository
 ) : ViewModel() {
 
@@ -40,6 +39,16 @@ class KeyboardViewModel(
     init {
         observeSettings()
         setupSuggestionDebouncing()
+    }
+
+    fun rephraseContent() {
+        viewModelScope.launch {
+            val currentText = _uiState.value.keyboardState.currentText
+            val result = rephraseContentUseCase(currentText, "Friendly", "English")
+            if (result is ResultWrapper.Success) {
+
+            }
+        }
     }
 
     private fun observeSettings() {
@@ -66,7 +75,7 @@ class KeyboardViewModel(
     private fun setupSuggestionDebouncing() {
         viewModelScope.launch {
             textChangeChannel.receiveAsFlow()
-                .debounce(300) // Wait 300ms after typing stops
+                .debounce(300)
                 .distinctUntilChanged()
                 .collect { text ->
                     fetchSuggestions(text)
