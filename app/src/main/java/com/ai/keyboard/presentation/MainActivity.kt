@@ -18,10 +18,10 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
@@ -29,13 +29,14 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.ai.keyboard.presentation.screen.SettingsScreen
+import com.ai.keyboard.presentation.screen.settings.SettingsScreen
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardIntent
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardViewModel
 import com.ai.keyboard.presentation.screen.setup.SetupScreen
@@ -76,7 +77,7 @@ fun MainScreen(
     viewModel: KeyboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableIntStateOf(0) }
 
     Scaffold(
         topBar = {
@@ -109,7 +110,7 @@ fun MainScreen(
                     .padding(16.dp)
             )
             // Tab Row
-            TabRow(
+            PrimaryTabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = MaterialTheme.colorScheme.surface
             ) {
@@ -150,11 +151,15 @@ fun MainScreen(
                 2 -> SettingsScreen(
                     isHapticEnabled = uiState.keyboardState.isHapticEnabled,
                     isSoundEnabled = uiState.keyboardState.isSoundEnabled,
+                    isNumberRowEnabled = uiState.keyboardState.isNumberRowEnabled,
                     onToggleHaptic = {
                         viewModel.handleIntent(KeyboardIntent.ToggleHaptic)
                     },
                     onToggleSound = {
                         viewModel.handleIntent(KeyboardIntent.ToggleSound)
+                    },
+                    onToggleNumberRow = {
+                        viewModel.handleIntent(KeyboardIntent.ToggleNumerRow)
                     }
                 )
             }

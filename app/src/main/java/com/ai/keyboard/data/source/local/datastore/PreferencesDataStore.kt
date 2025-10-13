@@ -19,6 +19,7 @@ class PreferencesDataStore(private val context: Context) {
         private val THEME_KEY = stringPreferencesKey("theme")
         private val HAPTIC_KEY = booleanPreferencesKey("haptic_enabled")
         private val SOUND_KEY = booleanPreferencesKey("sound_enabled")
+        private val NUMER_ROW_ENABLED_KEY = booleanPreferencesKey("number_row_enabled")
     }
 
     suspend fun saveTheme(theme: KeyboardTheme) {
@@ -55,6 +56,18 @@ class PreferencesDataStore(private val context: Context) {
     fun isSoundEnabled(): Flow<Boolean> {
         return context.dataStore.data.map { preferences ->
             preferences[SOUND_KEY] ?: true
+        }
+    }
+
+    suspend fun saveNumberRowEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[NUMER_ROW_ENABLED_KEY] = enabled
+        }
+    }
+
+    fun isNumberRowEnabled(): Flow<Boolean> {
+        return context.dataStore.data.map { preferences ->
+            preferences[NUMER_ROW_ENABLED_KEY] ?: false
         }
     }
 }

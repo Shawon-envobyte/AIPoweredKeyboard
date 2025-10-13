@@ -32,4 +32,12 @@ class SettingsRepositoryImpl(
     override fun isSoundEnabled(): Flow<Boolean> {
         return preferencesDataStore.isSoundEnabled()
     }
+
+    override suspend fun saveNumberRowEnabled(enabled: Boolean) {
+        preferencesDataStore.saveNumberRowEnabled(enabled)
+    }
+
+    override fun isNumberRowEnabled(): Flow<Boolean> {
+        return preferencesDataStore.isNumberRowEnabled()
+    }
 }

@@ -1,4 +1,4 @@
-package com.ai.keyboard.presentation.screen
+package com.ai.keyboard.presentation.screen.settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,8 +13,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Vibration
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,8 +33,10 @@ import androidx.compose.ui.unit.sp
 fun SettingsScreen(
     isHapticEnabled: Boolean,
     isSoundEnabled: Boolean,
+    isNumberRowEnabled: Boolean,
     onToggleHaptic: () -> Unit,
-    onToggleSound: () -> Unit
+    onToggleSound: () -> Unit,
+    onToggleNumberRow: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -67,14 +70,24 @@ fun SettingsScreen(
             onCheckedChange = { onToggleHaptic() }
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(5.dp))
 
         SettingItem(
-            icon = Icons.Default.VolumeUp,
+            icon = Icons.AutoMirrored.Filled.VolumeUp,
             title = "Sound Feedback",
             description = "Play sound on key press",
             checked = isSoundEnabled,
             onCheckedChange = { onToggleSound() }
+        )
+
+        Spacer(modifier = Modifier.height(5.dp))
+
+        SettingItem(
+            icon = Icons.Default.Numbers,
+            title = "Number Keys",
+            description = "Enable number keys top of keyboard",
+            checked = isNumberRowEnabled,
+            onCheckedChange = { onToggleNumberRow() }
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -122,7 +135,7 @@ fun SettingsScreen(
 
 @Composable
 fun SettingItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     title: String,
     description: String,
     checked: Boolean,

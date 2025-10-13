@@ -20,11 +20,13 @@ object HttpClientProvider {
     val client: HttpClient by lazy {
         HttpClient(OkHttp) {
             install(ContentNegotiation) {
-                json(Json {
-                    prettyPrint = true
-                    isLenient = true
-                    ignoreUnknownKeys = true
-                })
+                json(
+                    Json {
+                        prettyPrint = true
+                        isLenient = true
+                        ignoreUnknownKeys = true
+                    }
+                )
             }
             install(HttpTimeout) {
                 requestTimeoutMillis = 50_000L

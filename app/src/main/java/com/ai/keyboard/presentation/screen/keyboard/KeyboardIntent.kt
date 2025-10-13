@@ -14,4 +14,5 @@ sealed class KeyboardIntent {
     data class ThemeChanged(val theme: KeyboardTheme) : KeyboardIntent()
     object ToggleHaptic : KeyboardIntent()
     object ToggleSound : KeyboardIntent()
+    object ToggleNumerRow : KeyboardIntent()
 }

@@ -69,6 +69,13 @@ class KeyboardViewModel(
                 updateKeyboardState { copy(isSoundEnabled = enabled) }
             }
         }
+
+        viewModelScope.launch {
+            settingsRepository.isNumberRowEnabled().collect { enabled ->
+                updateKeyboardState { copy(isNumberRowEnabled = enabled) }
+            }
+        }
+
     }
 
     @OptIn(FlowPreview::class)
@@ -107,6 +114,7 @@ class KeyboardViewModel(
             is KeyboardIntent.ToggleHaptic -> toggleHaptic()
             is KeyboardIntent.ToggleSound -> toggleSound()
             is KeyboardIntent.CursorPositionChanged -> updateCursorPosition(intent.position)
+            is KeyboardIntent.ToggleNumerRow -> toggleNumerRow()
         }
     }
 
@@ -200,7 +208,7 @@ class KeyboardViewModel(
             words.dropLast(1).joinToString(" ") +
                     (if (words.size > 1) " " else "") + suggestion + " "
         } else {
-            suggestion + " "
+            "$suggestion "
         }
         updateText(newText)
         onKeyPressListener?.invoke()
@@ -216,6 +224,14 @@ class KeyboardViewModel(
             else -> currentMode
         }
         updateMode(newMode)
+    }
+
+    private fun toggleNumerRow() {
+        val currentState = _uiState.value.keyboardState
+        updateKeyboardState { copy(isNumberRowEnabled = !currentState.isNumberRowEnabled) }
+        viewModelScope.launch {
+            settingsRepository.saveNumberRowEnabled(!currentState.isNumberRowEnabled)
+        }
     }
 
     private fun toggleSymbol() {

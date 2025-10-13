@@ -79,6 +79,7 @@ fun KeyboardScreen(
                 else -> {
                     AlphabeticKeyboard(
                         mode = uiState.keyboardState.mode,
+                        isNumberRowEnabled = uiState.keyboardState.isNumberRowEnabled,
                         onIntent = { viewModel.handleIntent(it) },
                         modifier = Modifier.fillMaxWidth()
                     )

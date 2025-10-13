@@ -12,4 +12,7 @@ interface SettingsRepository {
 
     suspend fun saveSoundEnabled(enabled: Boolean)
     fun isSoundEnabled(): Flow<Boolean>
+
+    suspend fun saveNumberRowEnabled(enabled: Boolean)
+    fun isNumberRowEnabled(): Flow<Boolean>
 }

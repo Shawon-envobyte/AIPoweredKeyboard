@@ -9,5 +9,6 @@ data class KeyboardState(
     val selectedLanguage: String = "en",
     val theme: KeyboardTheme = KeyboardTheme.Light,
     val isHapticEnabled: Boolean = true,
-    val isSoundEnabled: Boolean = true
+    val isSoundEnabled: Boolean = true,
+    val isNumberRowEnabled: Boolean = false
 )
