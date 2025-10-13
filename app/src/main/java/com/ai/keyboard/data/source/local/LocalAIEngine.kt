@@ -126,6 +126,10 @@ class LocalAIEngine {
         "time" to listOf("to", "for", "is", "was", "flies")
     )
 
+    // Pre-compute word sets for faster lookups
+    private val commonWordsSet = commonWords.toSet()
+    private val sortedCommonWords = commonWords.sorted() // For binary search
+
     fun getSuggestions(
         text: String,
         context: String,
@@ -133,18 +137,34 @@ class LocalAIEngine {
     ): List<Suggestion> {
         if (text.isEmpty()) return emptyList()
 
-        val lastWord = text.trim().split(" ").lastOrNull()?.lowercase() ?: return emptyList()
+        val lastWord = text.trim().substringAfterLast(' ').lowercase()
+        if (lastWord.isEmpty()) return emptyList()
 
-        return commonWords
-            .filter { it.startsWith(lastWord, ignoreCase = true) && it != lastWord }
-            .take(5)
-            .mapIndexed { index, word ->
-                Suggestion(
-                    text = word,
-                    confidence = 1.0f - (index * 0.1f),
-                    type = SuggestionType.AUTOCOMPLETE
+        // Use binary search for better performance on large word lists
+        val startIndex = sortedCommonWords.binarySearch { it.compareTo(lastWord) }
+        val insertionPoint = if (startIndex < 0) -(startIndex + 1) else startIndex
+
+        val suggestions = mutableListOf<Suggestion>()
+        var index = insertionPoint
+        
+        // Collect matching words efficiently
+        while (index < sortedCommonWords.size && suggestions.size < 5) {
+            val word = sortedCommonWords[index]
+            if (word.startsWith(lastWord, ignoreCase = true) && word != lastWord) {
+                suggestions.add(
+                    Suggestion(
+                        text = word,
+                        confidence = 1.0f - (suggestions.size * 0.1f),
+                        type = SuggestionType.AUTOCOMPLETE
+                    )
                 )
+            } else if (!word.startsWith(lastWord, ignoreCase = true)) {
+                break // No more matches possible in sorted list
             }
+            index++
+        }
+
+        return suggestions
     }
 
     fun predictNextWord(text: String, count: Int): List<String> {

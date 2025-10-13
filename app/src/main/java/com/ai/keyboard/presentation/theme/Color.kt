@@ -46,3 +46,57 @@ val PurpleSpecialKeyBackground = Color(0xFF8E24AA)
 val PurpleSpecialKeyText = Color.White
 val PurpleSuggestionBackground = Color(0xFFAB47BC)
 val PurpleSuggestionText = Color.White
+
+// --- Green Theme ---
+val GreenBackground = Color(0xFF1B5E20)
+val GreenKeyBackground = Color(0xFF2E7D32)
+val GreenKeyText = Color.White
+val GreenSpecialKeyBackground = Color(0xFF43A047)
+val GreenSpecialKeyText = Color.White
+val GreenSuggestionBackground = Color(0xFF66BB6A)
+val GreenSuggestionText = Color.Black
+
+// --- Orange Theme ---
+val OrangeBackground = Color(0xFFE65100)
+val OrangeKeyBackground = Color(0xFFEF6C00)
+val OrangeKeyText = Color.White
+val OrangeSpecialKeyBackground = Color(0xFFFFA726)
+val OrangeSpecialKeyText = Color.Black
+val OrangeSuggestionBackground = Color(0xFFFFB74D)
+val OrangeSuggestionText = Color.Black
+
+// --- Red Theme ---
+val RedBackground = Color(0xFFB71C1C)
+val RedKeyBackground = Color(0xFFC62828)
+val RedKeyText = Color.White
+val RedSpecialKeyBackground = Color(0xFFE53935)
+val RedSpecialKeyText = Color.White
+val RedSuggestionBackground = Color(0xFFEF5350)
+val RedSuggestionText = Color.Black
+
+// --- Pink Theme ---
+val PinkBackground = Color(0xFFF8E1F4)
+val PinkKeyBackground = Color(0xFFF4C2D6)
+val PinkKeyText = Color(0xFF880E4F)
+val PinkSpecialKeyBackground = Color(0xFFF48FB1)
+val PinkSpecialKeyText = Color.White
+val PinkSuggestionBackground = Color(0xFFFCE4EC)
+val PinkSuggestionText = Color(0xFFAD1457)
+
+// --- Teal Theme ---
+val TealBackground = Color(0xFF004D40)
+val TealKeyBackground = Color(0xFF00796B)
+val TealKeyText = Color.White
+val TealSpecialKeyBackground = Color(0xFF009688)
+val TealSpecialKeyText = Color.White
+val TealSuggestionBackground = Color(0xFF4DB6AC)
+val TealSuggestionText = Color.Black
+
+// --- Gray Theme ---
+val GrayBackground = Color(0xFF212121)
+val GrayKeyBackground = Color(0xFF424242)
+val GrayKeyText = Color.White
+val GraySpecialKeyBackground = Color(0xFF616161)
+val GraySpecialKeyText = Color.White
+val GraySuggestionBackground = Color(0xFF9E9E9E)
+val GraySuggestionText = Color.Black

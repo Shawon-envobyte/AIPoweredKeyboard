@@ -10,6 +10,7 @@ import com.ai.keyboard.domain.model.KeyboardTheme
 import com.ai.keyboard.domain.repository.SettingsRepository
 import com.ai.keyboard.domain.usecase.GetSuggestionsUseCase
 import com.ai.keyboard.domain.usecase.RephraseContentUseCase
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -82,7 +83,7 @@ class KeyboardViewModel(
     private fun setupSuggestionDebouncing() {
         viewModelScope.launch {
             textChangeChannel.receiveAsFlow()
-                .debounce(300)
+                .debounce(150)
                 .distinctUntilChanged()
                 .collect { text ->
                     fetchSuggestions(text)
@@ -130,13 +131,19 @@ class KeyboardViewModel(
                     KeyboardMode.UPPERCASE, KeyboardMode.CAPS_LOCK -> action.char.uppercase()
                     else -> action.char
                 }
-                currentText = currentText.replaceRange(cursorPosition, cursorPosition, char)
+                // Optimize string manipulation
+                val sb = StringBuilder(currentText)
+                sb.insert(cursorPosition, char)
+                currentText = sb.toString()
                 cursorPosition += char.length
             }
 
             is KeyAction.Backspace -> {
                 if (cursorPosition > 0 && currentText.isNotEmpty()) {
-                    currentText = currentText.removeRange(cursorPosition - 1, cursorPosition)
+                    // Optimize string manipulation
+                    val sb = StringBuilder(currentText)
+                    sb.deleteCharAt(cursorPosition - 1)
+                    currentText = sb.toString()
                     cursorPosition--
                 } else {
                     textChanged = false
@@ -144,15 +151,17 @@ class KeyboardViewModel(
             }
 
             is KeyAction.Enter -> {
-                val char = "\n"
-                currentText = currentText.replaceRange(cursorPosition, cursorPosition, char)
-                cursorPosition += char.length
+                val sb = StringBuilder(currentText)
+                sb.insert(cursorPosition, "\n")
+                currentText = sb.toString()
+                cursorPosition += 1
             }
 
             is KeyAction.Space -> {
-                val char = " "
-                currentText = currentText.replaceRange(cursorPosition, cursorPosition, char)
-                cursorPosition += char.length
+                val sb = StringBuilder(currentText)
+                sb.insert(cursorPosition, " ")
+                currentText = sb.toString()
+                cursorPosition += 1
             }
 
             is KeyAction.MoveCursor -> {
@@ -175,6 +184,7 @@ class KeyboardViewModel(
 
         if (textChanged) {
             onTextChangeListener?.invoke(currentText, cursorPosition)
+            // Use trySend instead of send to avoid blocking
             textChangeChannel.trySend(currentText)
         } else {
             onCursorChangeListener?.invoke(cursorPosition)
@@ -262,7 +272,7 @@ class KeyboardViewModel(
     }
 
     private fun fetchSuggestions(text: String) {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.Default) {
             _uiState.update { it.copy(isLoading = true) }
 
             getSuggestionsUseCase(text)

@@ -6,7 +6,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -38,6 +37,9 @@ fun Key(
         AIKeyboardTheme.colors.keyText
     }
 
+    // Optimize interaction source and ripple - move remember outside
+    val interactionSource = remember { MutableInteractionSource() }
+
     Box(
         modifier = modifier
             .height(48.dp)
@@ -46,8 +48,7 @@ fun Key(
             .background(backgroundColor)
             .clickable(
                 onClick = onClick,
-                interactionSource = remember { MutableInteractionSource() },
-                //indication = rememberRipple()
+                interactionSource = interactionSource
             ),
         contentAlignment = Alignment.Center
     ) {

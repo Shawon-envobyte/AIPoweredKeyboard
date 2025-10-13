@@ -29,6 +29,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ai.keyboard.domain.model.KeyboardTheme
+import com.ai.keyboard.presentation.theme.BlueBackground
+import com.ai.keyboard.presentation.theme.DarkBackground
+import com.ai.keyboard.presentation.theme.GrayBackground
+import com.ai.keyboard.presentation.theme.GreenBackground
+import com.ai.keyboard.presentation.theme.LightBackground
+import com.ai.keyboard.presentation.theme.OrangeBackground
+import com.ai.keyboard.presentation.theme.PinkBackground
+import com.ai.keyboard.presentation.theme.PurpleBackground
+import com.ai.keyboard.presentation.theme.RedBackground
+import com.ai.keyboard.presentation.theme.TealBackground
 
 @Composable
 fun ThemeScreen(
@@ -67,10 +77,16 @@ fun ThemePreviewCard(
     onClick: () -> Unit
 ) {
     val backgroundColor = when (theme) {
-        KeyboardTheme.Light -> Color(0xFFE8EAED)
-        KeyboardTheme.Dark -> Color(0xFF2D2D2D)
-        KeyboardTheme.Blue -> Color(0xFF3949AB)
-        KeyboardTheme.Purple -> Color(0xFF6A1B9A)
+        KeyboardTheme.Light -> LightBackground
+        KeyboardTheme.Dark -> DarkBackground
+        KeyboardTheme.Blue -> BlueBackground
+        KeyboardTheme.Purple -> PurpleBackground
+        KeyboardTheme.Pink -> PinkBackground
+        KeyboardTheme.Green -> GreenBackground
+        KeyboardTheme.Orange -> OrangeBackground
+        KeyboardTheme.Red -> RedBackground
+        KeyboardTheme.Teal -> TealBackground
+        KeyboardTheme.Gray -> GrayBackground
     }
 
     val textColor = if (theme == KeyboardTheme.Light) Color.Black else Color.White
@@ -119,6 +135,12 @@ fun ThemePreviewCard(
                         KeyboardTheme.Dark -> "Easy on the eyes"
                         KeyboardTheme.Blue -> "Professional look"
                         KeyboardTheme.Purple -> "Vibrant and modern"
+                        KeyboardTheme.Pink -> "Soft and feminine"
+                        KeyboardTheme.Green -> "Fruity and refreshing"
+                        KeyboardTheme.Orange -> "Warm and inviting"
+                        KeyboardTheme.Red -> "Bold and attention-grabbing"
+                        KeyboardTheme.Teal -> "Calm and refreshing"
+                        KeyboardTheme.Gray -> "Muted and neutral"
                     },
                     fontSize = 14.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant

@@ -4,5 +4,11 @@ enum class KeyboardTheme {
     Light,
     Dark,
     Blue,
-    Purple
+    Purple,
+    Pink,
+    Teal,
+    Orange,
+    Green,
+    Red,
+    Gray
 }

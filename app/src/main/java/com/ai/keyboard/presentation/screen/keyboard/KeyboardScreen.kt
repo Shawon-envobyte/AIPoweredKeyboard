@@ -11,6 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ai.keyboard.domain.model.KeyboardMode
@@ -30,6 +32,15 @@ fun KeyboardScreen(
     viewModel: KeyboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    
+    // Optimize by using derivedStateOf for expensive computations
+    val keyboardMode by remember {
+        derivedStateOf { uiState.keyboardState.mode }
+    }
+    
+    val suggestions by remember {
+        derivedStateOf { uiState.suggestions }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.setOnTextChangeListener(onTextChange)
@@ -45,9 +56,9 @@ fun KeyboardScreen(
                 .padding(vertical = 4.dp, horizontal = 2.dp)
                 .navigationBarsPadding()
         ) {
-            // Suggestion Bar
+            // Suggestion Bar - only recompose when suggestions change
             SuggestionBar(
-                suggestions = uiState.suggestions,
+                suggestions = suggestions,
                 onSuggestionClick = { suggestion ->
                     viewModel.handleIntent(
                         KeyboardIntent.SuggestionSelected(suggestion.text)
@@ -60,8 +71,8 @@ fun KeyboardScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Keyboard Layout
-            when (uiState.keyboardState.mode) {
+            // Keyboard Layout - only recompose when mode changes
+            when (keyboardMode) {
                 KeyboardMode.SYMBOLS -> {
                     SymbolKeyboard(
                         onIntent = { viewModel.handleIntent(it) },
@@ -78,7 +89,7 @@ fun KeyboardScreen(
 
                 else -> {
                     AlphabeticKeyboard(
-                        mode = uiState.keyboardState.mode,
+                        mode = keyboardMode,
                         isNumberRowEnabled = uiState.keyboardState.isNumberRowEnabled,
                         onIntent = { viewModel.handleIntent(it) },
                         modifier = Modifier.fillMaxWidth()

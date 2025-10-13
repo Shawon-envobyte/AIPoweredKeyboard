@@ -90,6 +90,66 @@ fun purpleKeyboardColors() = KeyboardColors(
     suggestionText = PurpleSuggestionText
 )
 
+fun greenKeyboardColors() = KeyboardColors(
+    background = GreenBackground,
+    keyBackground = GreenKeyBackground,
+    keyText = GreenKeyText,
+    specialKeyBackground = GreenSpecialKeyBackground,
+    specialKeyText = GreenSpecialKeyText,
+    suggestionBackground = GreenSuggestionBackground,
+    suggestionText = GreenSuggestionText
+)
+
+fun orangeKeyboardColors() = KeyboardColors(
+    background = OrangeBackground,
+    keyBackground = OrangeKeyBackground,
+    keyText = OrangeKeyText,
+    specialKeyBackground = OrangeSpecialKeyBackground,
+    specialKeyText = OrangeSpecialKeyText,
+    suggestionBackground = OrangeSuggestionBackground,
+    suggestionText = OrangeSuggestionText
+)
+
+fun pinkKeyboardColors() = KeyboardColors(
+    background = PinkBackground,
+    keyBackground = PinkKeyBackground,
+    keyText = PinkKeyText,
+    specialKeyBackground = PinkSpecialKeyBackground,
+    specialKeyText = PinkSpecialKeyText,
+    suggestionBackground = PinkSuggestionBackground,
+    suggestionText = PinkSuggestionText
+)
+
+fun tealKeyboardColors() = KeyboardColors(
+    background = TealBackground,
+    keyBackground = TealKeyBackground,
+    keyText = TealKeyText,
+    specialKeyBackground = TealSpecialKeyBackground,
+    specialKeyText = TealSpecialKeyText,
+    suggestionBackground = TealSuggestionBackground,
+    suggestionText = TealSuggestionText
+)
+
+fun grayKeyboardColors() = KeyboardColors(
+    background = GrayBackground,
+    keyBackground = GrayKeyBackground,
+    keyText = GrayKeyText,
+    specialKeyBackground = GraySpecialKeyBackground,
+    specialKeyText = GraySpecialKeyText,
+    suggestionBackground = GraySuggestionBackground,
+    suggestionText = GraySuggestionText
+)
+
+fun redKeyboardColors() = KeyboardColors(
+    background = RedBackground,
+    keyBackground = RedKeyBackground,
+    keyText = RedKeyText,
+    specialKeyBackground = RedSpecialKeyBackground,
+    specialKeyText = RedSpecialKeyText,
+    suggestionBackground = RedSuggestionBackground,
+    suggestionText = RedSuggestionText
+)
+
 @Composable
 fun AIKeyboardTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -112,6 +172,12 @@ fun AIKeyboardTheme(
         KeyboardTheme.Dark -> darkKeyboardColors()
         KeyboardTheme.Blue -> blueKeyboardColors()
         KeyboardTheme.Purple -> purpleKeyboardColors()
+        KeyboardTheme.Green -> greenKeyboardColors()
+        KeyboardTheme.Orange -> orangeKeyboardColors()
+        KeyboardTheme.Pink -> pinkKeyboardColors()
+        KeyboardTheme.Teal -> tealKeyboardColors()
+        KeyboardTheme.Gray -> grayKeyboardColors()
+        KeyboardTheme.Red -> redKeyboardColors()
     }
 
     CompositionLocalProvider(LocalKeyboardColors provides colors) {
