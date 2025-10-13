@@ -95,6 +95,7 @@ class KeyboardViewModel(
             is KeyboardIntent.ThemeChanged -> changeTheme(intent.theme)
             is KeyboardIntent.ToggleHaptic -> toggleHaptic()
             is KeyboardIntent.ToggleSound -> toggleSound()
+            is KeyboardIntent.CursorPositionChanged -> updateCursorPosition(intent.position)
         }
     }
 
@@ -171,6 +172,10 @@ class KeyboardViewModel(
             )
         }
         onTextChangeListener?.invoke(text, text.length)
+    }
+    
+    private fun updateCursorPosition(position: Int) {
+        updateKeyboardState { copy(cursorPosition = position) }
     }
 
     private fun insertSuggestion(suggestion: String) {

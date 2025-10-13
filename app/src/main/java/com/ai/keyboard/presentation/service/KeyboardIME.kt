@@ -24,6 +24,7 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import com.ai.keyboard.presentation.screen.keyboard.KeyboardIntent
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardScreen
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardViewModel
 import org.koin.android.ext.android.inject
@@ -113,6 +114,27 @@ class KeyboardIME : InputMethodService(),
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
+    }
+
+    override fun onUpdateSelection(
+        oldSelStart: Int,
+        oldSelEnd: Int,
+        newSelStart: Int,
+        newSelEnd: Int,
+        candidatesStart: Int,
+        candidatesEnd: Int
+    ) {
+        super.onUpdateSelection(
+            oldSelStart,
+            oldSelEnd,
+            newSelStart,
+            newSelEnd,
+            candidatesStart,
+            candidatesEnd
+        )
+        if (newSelStart != -1) {
+            viewModel.handleIntent(KeyboardIntent.CursorPositionChanged(newSelStart))
+        }
     }
 
     override fun onFinishInputView(finishingInput: Boolean) {
