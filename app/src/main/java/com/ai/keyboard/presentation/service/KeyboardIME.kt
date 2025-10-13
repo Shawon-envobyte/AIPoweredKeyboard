@@ -94,9 +94,8 @@ class KeyboardIME : InputMethodService(),
                 val uiState by viewModel.uiState.collectAsState()
 
                 KeyboardScreen(
-                    onTextChange = { text ->
-                        commitText(text)
-                    },
+                    onTextChange = ::commitText,
+                    onCursorChange = ::moveCursor,
                     onKeyPress = {
                         performFeedback(
                             hapticEnabled = uiState.keyboardState.isHapticEnabled,
@@ -127,15 +126,19 @@ class KeyboardIME : InputMethodService(),
         store.clear()
     }
 
-    private fun commitText(text: String) {
+    private fun commitText(text: String, newCursorPosition: Int) {
         val ic: InputConnection = currentInputConnection ?: return
 
-        // Get current text before cursor
-        val currentText = ic.getTextBeforeCursor(1000, 0)?.toString() ?: ""
-
-        // Delete old text and insert new
-        ic.deleteSurroundingText(currentText.length, 0)
+        ic.beginBatchEdit()
+        ic.deleteSurroundingText(Int.MAX_VALUE, Int.MAX_VALUE) // Clear the entire field
         ic.commitText(text, 1)
+        ic.setSelection(newCursorPosition, newCursorPosition)
+        ic.endBatchEdit()
+    }
+
+    private fun moveCursor(position: Int) {
+        val ic: InputConnection = currentInputConnection ?: return
+        ic.setSelection(position, position)
     }
 
     private fun performFeedback(hapticEnabled: Boolean, soundEnabled: Boolean) {

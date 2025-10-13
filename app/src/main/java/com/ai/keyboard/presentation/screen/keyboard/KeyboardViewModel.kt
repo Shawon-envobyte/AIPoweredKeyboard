@@ -33,7 +33,8 @@ class KeyboardViewModel(
 
     private val textChangeChannel = Channel<String>(Channel.CONFLATED)
 
-    private var onTextChangeListener: ((String) -> Unit)? = null
+    private var onTextChangeListener: ((String, Int) -> Unit)? = null
+    private var onCursorChangeListener: ((Int) -> Unit)? = null
     private var onKeyPressListener: (() -> Unit)? = null
 
     init {
@@ -73,8 +74,12 @@ class KeyboardViewModel(
         }
     }
 
-    fun setOnTextChangeListener(listener: (String) -> Unit) {
+    fun setOnTextChangeListener(listener: (String, Int) -> Unit) {
         onTextChangeListener = listener
+    }
+
+    fun setOnCursorChangeListener(listener: (Int) -> Unit) {
+        onCursorChangeListener = listener
     }
 
     fun setOnKeyPressListener(listener: () -> Unit) {
@@ -95,38 +100,67 @@ class KeyboardViewModel(
 
     private fun handleKeyPress(action: KeyAction) {
         val currentState = _uiState.value.keyboardState
-        val currentText = currentState.currentText
+        var currentText = currentState.currentText
+        var cursorPosition = currentState.cursorPosition
+        var textChanged = true
 
-        val newText = when (action) {
+        when (action) {
             is KeyAction.Character -> {
                 val char = when (currentState.mode) {
                     KeyboardMode.UPPERCASE, KeyboardMode.CAPS_LOCK -> action.char.uppercase()
                     else -> action.char
                 }
-                currentText + char
+                currentText = currentText.replaceRange(cursorPosition, cursorPosition, char)
+                cursorPosition += char.length
             }
 
             is KeyAction.Backspace -> {
-                if (currentText.isNotEmpty()) {
-                    currentText.dropLast(1)
-                } else currentText
+                if (cursorPosition > 0 && currentText.isNotEmpty()) {
+                    currentText = currentText.removeRange(cursorPosition - 1, cursorPosition)
+                    cursorPosition--
+                } else {
+                    textChanged = false
+                }
             }
 
-            is KeyAction.Enter -> currentText + "\n"
-            is KeyAction.Space -> currentText + " "
-            else -> currentText
+            is KeyAction.Enter -> {
+                val char = "\n"
+                currentText = currentText.replaceRange(cursorPosition, cursorPosition, char)
+                cursorPosition += char.length
+            }
+            is KeyAction.Space -> {
+                val char = " "
+                currentText = currentText.replaceRange(cursorPosition, cursorPosition, char)
+                cursorPosition += char.length
+            }
+            is KeyAction.MoveCursor -> {
+                val newPosition = cursorPosition + action.amount
+                cursorPosition = newPosition.coerceIn(0, currentText.length)
+                textChanged = false
+            }
+            is KeyAction.InsertSuggestion -> {
+                currentText = currentText.replaceRange(cursorPosition, cursorPosition, action.text)
+                cursorPosition += action.text.length
+            }
+            KeyAction.Shift, KeyAction.Symbol -> {
+                textChanged = false
+            }
         }
 
-        updateText(newText)
+        updateKeyboardState { copy(currentText = currentText, cursorPosition = cursorPosition) }
+
+        if (textChanged) {
+            onTextChangeListener?.invoke(currentText, cursorPosition)
+            textChangeChannel.trySend(currentText)
+        } else {
+            onCursorChangeListener?.invoke(cursorPosition)
+        }
+
         onKeyPressListener?.invoke()
 
-        // Reset to lowercase after single uppercase
         if (currentState.mode == KeyboardMode.UPPERCASE && action is KeyAction.Character) {
             updateMode(KeyboardMode.LOWERCASE)
         }
-
-        // Trigger suggestion fetch
-        textChangeChannel.trySend(newText)
     }
 
     private fun updateText(text: String) {
@@ -136,7 +170,7 @@ class KeyboardViewModel(
                 cursorPosition = text.length
             )
         }
-        onTextChangeListener?.invoke(text)
+        onTextChangeListener?.invoke(text, text.length)
     }
 
     private fun insertSuggestion(suggestion: String) {
