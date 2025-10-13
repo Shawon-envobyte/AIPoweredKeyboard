@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- res/xml/method.xml -->
+<input-method
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="com.ai.keyboard.presentation.MainActivity"
+    android:supportsSwitchingToNextInputMethod="true">
+
+    <subtype
+        android:imeSubtypeMode="keyboard"
+        android:imeSubtypeLocale="en_US"
+        android:label="English (US)" />
+
+    <subtype
+        android:imeSubtypeMode="keyboard"
+        android:imeSubtypeLocale="es_ES"
+        android:label="Español" />
+
+    <subtype
+        android:imeSubtypeMode="keyboard"
+        android:imeSubtypeLocale="fr_FR"
+        android:label="Français" />
+</input-method>
