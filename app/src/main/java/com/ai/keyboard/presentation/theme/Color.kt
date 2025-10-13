@@ -12,13 +12,13 @@ val Pink40 = Color(0xFF7D5260)
 
 
 // Light Theme
-val LightBackground = Color(0xFFD3D6DB)
-val LightKeyBackground = Color.White
-val LightKeyText = Color.Black
-val LightSpecialKeyBackground = Color(0xFFADB3BC)
-val LightSpecialKeyText = Color.Black
-val LightSuggestionBackground = Color(0xFFE8EAED)
-val LightSuggestionText = Color(0xFF202124)
+val LightBackground = Color(0xFFEEEFF2)
+val LightKeyBackground = Color(0xFFFFFFFF)
+val LightKeyText = Color(0xFF374151)
+val LightSpecialKeyBackground = Color(0xFFE5E6EA)
+val LightSpecialKeyText = Color(0xFF374151)
+val LightSuggestionBackground = Color(0xFFEEEFF2)
+val LightSuggestionText = Color(0xFF374151)
 
 // Dark Theme
 val DarkBackground = Color(0xFF1E1E1E)

@@ -55,7 +55,7 @@ fun Key(
             text = text,
             color = textColor,
             fontSize = 20.sp,
-            fontWeight = if (isSpecial) FontWeight.Medium else FontWeight.Normal
+            fontWeight = FontWeight.Medium
         )
     }
 }
