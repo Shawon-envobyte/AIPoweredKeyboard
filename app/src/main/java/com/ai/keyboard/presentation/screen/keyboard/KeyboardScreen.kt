@@ -20,7 +20,8 @@ import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun KeyboardScreen(
-    onTextChange: (String) -> Unit,
+    onTextChange: (String, Int) -> Unit,
+    onCursorChange: (Int) -> Unit,
     onKeyPress: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: KeyboardViewModel = koinViewModel()
@@ -29,6 +30,7 @@ fun KeyboardScreen(
 
     LaunchedEffect(Unit) {
         viewModel.setOnTextChangeListener(onTextChange)
+        viewModel.setOnCursorChangeListener(onCursorChange)
         viewModel.setOnKeyPressListener(onKeyPress)
     }
 
