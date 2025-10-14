@@ -54,7 +54,7 @@ The project follows **Clean Architecture** principles with clear separation of c
 ### Setup
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/AIPoweredKeyboard.git
+git clone https://github.com/ronyaburaihan/AIPoweredKeyboard.git
 cd AIPoweredKeyboard
 ```
 
