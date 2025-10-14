@@ -1,5 +1,12 @@
 package com.ai.keyboard.presentation.screen.settings
 
+import android.accessibilityservice.AccessibilityService
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.content.Context
+import android.content.Intent
+import android.provider.Settings
+import android.view.accessibility.AccessibilityManager
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -22,12 +30,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ai.keyboard.core.service.KeyboardAccessibilityService
 
 @Composable
 fun SettingsScreen(
@@ -89,6 +101,10 @@ fun SettingsScreen(
             checked = isNumberRowEnabled,
             onCheckedChange = { onToggleNumberRow() }
         )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        AccessibilityPermissionScreen()
 
         Spacer(modifier = Modifier.height(32.dp))
 
@@ -180,5 +196,48 @@ fun SettingItem(
                 onCheckedChange = onCheckedChange
             )
         }
+    }
+}
+
+@Composable
+fun AccessibilityPermissionScreen() {
+    val context = LocalContext.current
+    val isEnabled = remember { mutableStateOf(isAccessibilityServiceEnabled(context, KeyboardAccessibilityService::class.java)) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = if (isEnabled.value)
+                "Accessibility permission is ENABLED ✅"
+            else
+                "Accessibility permission is NOT enabled ⚠️"
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Button(onClick = {
+            if(!isEnabled.value){
+                val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+            }
+
+        }) {
+            Text("Open Accessibility Settings")
+        }
+    }
+}
+
+fun isAccessibilityServiceEnabled(context: Context, service: Class<out AccessibilityService>): Boolean {
+    val am = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager
+    val enabledServices = am.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK)
+    return enabledServices.any {
+        it.resolveInfo.serviceInfo.packageName == context.packageName &&
+                it.resolveInfo.serviceInfo.name == service.name
     }
 }
