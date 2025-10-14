@@ -1,6 +1,7 @@
 package com.ai.keyboard.domain.repository
 
 import com.ai.keyboard.core.util.ResultWrapper
+import com.ai.keyboard.domain.model.QuickReply
 import com.ai.keyboard.domain.model.Suggestion
 
 interface AIRepository {
@@ -25,9 +26,15 @@ interface AIRepository {
         tone: String
     ): ResultWrapper<String>
 
-        suspend fun fixGrammar(
+    suspend fun fixGrammar(
         content: String,
         language: String,
         action: String
     ): ResultWrapper<String>
+
+    suspend fun quickReply(
+        content: String,
+        language: String,
+    ): ResultWrapper<List<QuickReply>>
+
 }

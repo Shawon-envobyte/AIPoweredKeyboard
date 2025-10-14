@@ -1,16 +1,22 @@
 package com.ai.keyboard.data.repository
 
+import android.util.Log
 import com.ai.keyboard.core.util.ResultWrapper
 import com.ai.keyboard.data.mapper.contentRephrasePrompt
 import com.ai.keyboard.data.mapper.contentRephraseSystemPrompt
 import com.ai.keyboard.data.mapper.fixGrammarPrompt
 import com.ai.keyboard.data.mapper.fixGrammarSystemPrompt
+import com.ai.keyboard.data.mapper.quickReplyPrompt
+import com.ai.keyboard.data.mapper.quickReplySystemPrompt
 import com.ai.keyboard.data.mapper.toAPIRequest
+import com.ai.keyboard.data.mapper.toAPIRequestQuickReply
 import com.ai.keyboard.data.source.local.CacheManager
 import com.ai.keyboard.data.source.local.LocalAIEngine
 import com.ai.keyboard.data.source.remote.api.APIDataSource
+import com.ai.keyboard.domain.model.QuickReply
 import com.ai.keyboard.domain.model.Suggestion
 import com.ai.keyboard.domain.repository.AIRepository
+import com.hashtag.generator.ai.post.writer.data.model.APIRequest
 
 class AIRepositoryImpl(
     private val localAI: LocalAIEngine,
@@ -108,4 +114,25 @@ class AIRepositoryImpl(
             ResultWrapper.Failure(e.message ?: "Unknown error")
         }
     }
+
+    override suspend fun quickReply(
+        content: String,
+        language: String
+    ): ResultWrapper<List<QuickReply>> {
+        return try {
+            val response = remoteSource.getResponseFromAPI(
+                request = quickReplyPrompt(
+                    content = content,
+                    language = language
+                ).toAPIRequest(quickReplySystemPrompt())
+            )
+             Log.d("QuickReply", "$response")
+             ResultWrapper.Success(listOf())
+        } catch (e: Exception) {
+            ResultWrapper.Failure(e.message ?: "Unknown error")
+        }
+
+    }
 }
+
+

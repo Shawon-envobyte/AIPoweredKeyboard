@@ -71,3 +71,44 @@ fun fixGrammarSystemPrompt(): String {
         6. Output only the final rewritten text without commentary or formatting.
     """.trimIndent()
 }
+
+fun quickReplyPrompt(
+    content: String,
+    language: String
+): String {
+    return """
+    Create three natural message replies to the following message: "$content"
+
+    Requirements:
+    - Replies should sound like real human responses (e.g., chat or text message style).
+    - Each reply must represent a distinct tone:
+        1. Positive 😊
+        2. Neutral 😐
+        3. Negative 🙁
+    - Keep replies short, expressive, and natural — like how a person would actually respond.
+    - You may use emojis or casual expressions if they fit the tone naturally.
+    - Maintain the original context of the message.
+    - Avoid robotic or overly formal language.
+    - Output only the three replies labeled clearly as:
+        Positive:
+        Neutral:
+        Negative:
+""".trimIndent()
+}
+
+fun quickReplySystemPrompt(): String {
+    return """
+    You are an expert conversational response generator for social and casual communication.
+
+    Your responsibilities:
+    1. Create three natural message replies for the given content — one Positive, one Neutral, and one Negative.
+    2. Ensure each reply sounds authentic, like a real human response in a chat or conversation.
+    3. Use natural tone, expressions, and emojis where appropriate to match the mood.
+    4. Keep replies short, clear, and emotionally expressive — avoid robotic or overly formal phrasing.
+    5. Preserve the original message context and intent while varying the emotional tone.
+    6. Output only the three replies labeled clearly as:
+        Positive:
+        Neutral:
+        Negative:
+""".trimIndent()
+}

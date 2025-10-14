@@ -1,15 +1,20 @@
 package com.ai.keyboard.presentation.screen.keyboard
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ai.keyboard.core.service.ServiceCallBack
+import com.ai.keyboard.core.service.ServiceDataPass
 import com.ai.keyboard.core.util.ResultWrapper
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
 import com.ai.keyboard.domain.model.KeyboardState
 import com.ai.keyboard.domain.model.KeyboardTheme
+import com.ai.keyboard.domain.model.QuickReply
 import com.ai.keyboard.domain.repository.SettingsRepository
 import com.ai.keyboard.domain.usecase.FixGrammarUseCase
 import com.ai.keyboard.domain.usecase.GetSuggestionsUseCase
+import com.ai.keyboard.domain.usecase.QuickReplyUseCase
 import com.ai.keyboard.domain.usecase.RephraseContentUseCase
 import com.ai.keyboard.presentation.model.ActionButtonType
 import com.ai.keyboard.presentation.model.LanguageType
@@ -29,8 +34,9 @@ class KeyboardViewModel(
     private val getSuggestionsUseCase: GetSuggestionsUseCase,
     private val rephraseContentUseCase: RephraseContentUseCase,
     private val settingsRepository: SettingsRepository,
-    private val fixGrammarUseCase: FixGrammarUseCase
-) : ViewModel() {
+    private val fixGrammarUseCase: FixGrammarUseCase,
+    private val quickReplyUseCase: QuickReplyUseCase
+) : ViewModel(){
 
     private val _uiState = MutableStateFlow(KeyboardUIState())
     val uiState: StateFlow<KeyboardUIState> = _uiState.asStateFlow()
@@ -142,6 +148,7 @@ class KeyboardViewModel(
             is KeyboardIntent.CursorPositionChanged -> updateCursorPosition(intent.position)
             is KeyboardIntent.ToggleNumerRow -> toggleNumerRow()
             is KeyboardIntent.FixGrammarPressed -> toggleFixGrammar()
+            is KeyboardIntent.GetQuickReply -> getQuickReply()
         }
     }
 
@@ -430,4 +437,21 @@ class KeyboardViewModel(
             selectedAction = action
         )
     }
+
+    fun getQuickReply() {
+        viewModelScope.launch {
+            try {
+                val quickReply = quickReplyUseCase(ServiceDataPass.lastMessage, "English")
+                Log.d("QuickReply", quickReply.toString() +" get: "+ServiceDataPass.lastMessage)
+            }catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+        }
+        Log.d("QuickReply",  " get: "+ServiceDataPass.lastMessage)
+    }
+
+
+
+
 }

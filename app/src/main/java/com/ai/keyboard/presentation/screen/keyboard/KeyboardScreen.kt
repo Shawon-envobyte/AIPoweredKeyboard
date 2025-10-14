@@ -70,7 +70,7 @@ fun KeyboardScreen(
                 onGrammarClick = { viewModel.handleIntent(KeyboardIntent.FixGrammarPressed) },
                 onMagicClick = {},
                 onTranslateClick = {},
-                onChatClick = {},
+                onChatClick = { viewModel.handleIntent(KeyboardIntent.GetQuickReply) },
                 onClipboardClick = {},
                 onEmojiClick = {},
                 onDotClick = {},
