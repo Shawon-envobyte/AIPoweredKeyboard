@@ -6,8 +6,10 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,6 +41,7 @@ fun Space(
     Box(
         modifier = modifier
             .height(48.dp)
+            .padding(1.dp)
             .shadow(2.dp, RoundedCornerShape(6.dp))
             .clip(RoundedCornerShape(6.dp))
             .background(backgroundColor)
@@ -64,9 +67,9 @@ fun Space(
     ) {
         Text(
             text = text,
-            color = textColor,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Medium
+            style = MaterialTheme.typography.bodyMedium,
+            color = AIKeyboardTheme.colors.specialKeyText,
+            fontSize = 14.sp
         )
     }
 }

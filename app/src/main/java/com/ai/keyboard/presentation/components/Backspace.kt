@@ -5,6 +5,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,11 +63,12 @@ fun Backspace(
     }
 
     val backgroundColor = AIKeyboardTheme.colors.specialKeyBackground
-    val textColor =  AIKeyboardTheme.colors.specialKeyText
+    val textColor = AIKeyboardTheme.colors.specialKeyText
 
     Box(
         modifier = modifier
             .height(48.dp)
+            .padding(1.dp)
             .shadow(2.dp, RoundedCornerShape(6.dp))
             .clip(RoundedCornerShape(6.dp))
             .background(backgroundColor)

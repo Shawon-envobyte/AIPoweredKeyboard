@@ -57,7 +57,7 @@ fun KeyboardScreen(
             modifier = modifier
                 .fillMaxWidth()
                 .background(AIKeyboardTheme.colors.background)
-                .padding(vertical = 4.dp, horizontal = 2.dp)
+                .padding(vertical = 4.dp, horizontal = 6.dp)
                 .navigationBarsPadding()
         ) {
             // Suggestion Bar

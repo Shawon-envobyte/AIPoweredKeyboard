@@ -5,8 +5,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ai.keyboard.domain.model.KeyAction
+import com.ai.keyboard.domain.model.KeyboardMode
 import com.ai.keyboard.presentation.components.Key
+import com.ai.keyboard.presentation.components.KeyButton
 import com.ai.keyboard.presentation.components.KeyRow
+import com.ai.keyboard.presentation.components.SpecialKeyButton
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardIntent
 
 @Composable
@@ -16,84 +19,86 @@ fun SymbolKeyboard(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        // Row 1
+        // First row
         KeyRow(
             keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"),
-            onKeyPress = { key ->
-                onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(key)))
-            }
+            onIntent = onIntent,
+            mode = KeyboardMode.SYMBOLS
         )
 
-        // Row 2
+        // Second row
         KeyRow(
             keys = listOf("-", "/", ":", ";", "(", ")", "$", "&", "@", "\""),
-            onKeyPress = { key ->
-                onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(key)))
-            }
+            onIntent = onIntent,
+            mode = KeyboardMode.SYMBOLS
         )
 
-        // Row 3
+        // Third row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Key(
-                text = "#+=",
+            SpecialKeyButton(
+                icon = "=\\<",
                 onClick = { onIntent(KeyboardIntent.ExtendedSymbolPressed) },
-                modifier = Modifier.weight(1.5f),
-                isSpecial = true
+                modifier = Modifier.weight(1.5f)
             )
 
-            listOf(".", ",", "?", "!", "'", "*", "+", "=").forEach { key ->
-                Key(
-                    text = key,
-                    onClick = {
-                        onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(key)))
-                    },
+            listOf(".", ",", "?", "!", "'", "[", "]", "{", "}").forEach { char ->
+                KeyButton(
+                    text = char,
+                    onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(char))) },
+                    mode = KeyboardMode.SYMBOLS,
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            Key(
-                text = "⌫",
-                onClick = {
-                    onIntent(KeyboardIntent.KeyPressed(KeyAction.Backspace))
-                },
-                modifier = Modifier.weight(1.5f),
-                isSpecial = true
+            SpecialKeyButton(
+                icon = "⌫",
+                onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Backspace)) },
+                modifier = Modifier.weight(1.5f)
             )
         }
 
-        // Row 4
+        // Fourth row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Key(
-                text = "ABC",
+            SpecialKeyButton(
+                icon = "ABC",
                 onClick = { onIntent(KeyboardIntent.AlphabetPressed) },
-                modifier = Modifier.weight(1.5f),
-                isSpecial = true
+                modifier = Modifier.weight(1.5f)
             )
 
-            Key(
-                text = "Space",
-                onClick = {
-                    onIntent(KeyboardIntent.KeyPressed(KeyAction.Space))
-                },
-                modifier = Modifier.weight(5f),
-                isSpecial = true
+            KeyButton(
+                text = "#",
+                onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character("#"))) },
+                mode = KeyboardMode.SYMBOLS,
+                modifier = Modifier.weight(1f)
             )
 
-            Key(
-                text = "↵",
-                onClick = {
-                    onIntent(KeyboardIntent.KeyPressed(KeyAction.Enter))
-                },
-                modifier = Modifier.weight(1.5f),
-                isSpecial = true
+            KeyButton(
+                text = " ",
+                displayText = "Space",
+                onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Space)) },
+                mode = KeyboardMode.SYMBOLS,
+                modifier = Modifier.weight(4f)
+            )
+
+            KeyButton(
+                text = "%",
+                onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character("%"))) },
+                mode = KeyboardMode.SYMBOLS,
+                modifier = Modifier.weight(1f)
+            )
+
+            SpecialKeyButton(
+                icon = "⏎",
+                onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Enter)) },
+                modifier = Modifier.weight(1.5f)
             )
         }
     }
