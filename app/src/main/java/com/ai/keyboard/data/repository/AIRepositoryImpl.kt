@@ -3,6 +3,8 @@ package com.ai.keyboard.data.repository
 import com.ai.keyboard.core.util.ResultWrapper
 import com.ai.keyboard.data.mapper.contentRephrasePrompt
 import com.ai.keyboard.data.mapper.contentRephraseSystemPrompt
+import com.ai.keyboard.data.mapper.fixGrammarPrompt
+import com.ai.keyboard.data.mapper.fixGrammarSystemPrompt
 import com.ai.keyboard.data.mapper.toAPIRequest
 import com.ai.keyboard.data.source.local.CacheManager
 import com.ai.keyboard.data.source.local.LocalAIEngine
@@ -81,6 +83,25 @@ class AIRepositoryImpl(
                     language = language,
                     tone = tone
                 ).toAPIRequest(contentRephraseSystemPrompt())
+            )
+            ResultWrapper.Success(response.candidates.first().content.parts.first().text)
+        } catch (e: Exception) {
+            ResultWrapper.Failure(e.message ?: "Unknown error")
+        }
+    }
+
+    override suspend fun fixGrammar(
+        content: String,
+        language: String,
+        action: String
+    ): ResultWrapper<String> {
+        return try {
+            val response = remoteSource.getResponseFromAPI(
+                request = fixGrammarPrompt(
+                    content = content,
+                    language = language,
+                    action = action
+                ).toAPIRequest(fixGrammarSystemPrompt())
             )
             ResultWrapper.Success(response.candidates.first().content.parts.first().text)
         } catch (e: Exception) {

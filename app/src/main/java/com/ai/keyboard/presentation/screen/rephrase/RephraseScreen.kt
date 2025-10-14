@@ -13,11 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.ai.keyboard.R
-import com.ai.keyboard.presentation.components.ActionButtonData
 import com.ai.keyboard.presentation.components.ActionButtonRow
 import com.ai.keyboard.presentation.components.ContentCard
 import com.ai.keyboard.presentation.components.CustomBottomBar
 import com.ai.keyboard.presentation.components.CustomToolbar
+import com.ai.keyboard.presentation.model.ActionButtonType
+import com.ai.keyboard.presentation.model.LanguageType
 
 @Composable
 fun RephraseScreen(
@@ -38,20 +39,16 @@ fun RephraseScreenContent(
     ) {
 
 
-        val actions = listOf(
-            ActionButtonData(label = "Rephrase", icon = R.drawable.ic_magic),
-            ActionButtonData(label = "Grammar Fix", emoji = "🛠️"),
-            ActionButtonData(label = "Add emoji", emoji = "🤗")
-        )
-        var selectedLanguage by remember { mutableStateOf("English") }
+
+        var selectedLanguage by remember { mutableStateOf(LanguageType.ENGLISH) }
         CustomToolbar(
             title = stringResource(R.string.word_tone),
             onBackButtonClicked = onBackButtonClick,
             selectedLanguage = selectedLanguage,
-            onLanguageSelected = { selectedLanguage = it }
+            onLanguageSelected = { selectedLanguage = it  }
         )
         ActionButtonRow(
-            actions = actions,
+            actions = ActionButtonType.values().map { it },
             onActionClick = { println("Clicked: ${it.label}") }
         )
         ContentCard(

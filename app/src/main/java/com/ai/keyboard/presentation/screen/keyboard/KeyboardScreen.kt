@@ -16,10 +16,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ai.keyboard.domain.model.KeyboardMode
+import com.ai.keyboard.presentation.components.OptionBar
 import com.ai.keyboard.presentation.components.SuggestionBar
 import com.ai.keyboard.presentation.keyboard.AlphabeticKeyboard
 import com.ai.keyboard.presentation.keyboard.ExtendedSymbolKeyboard
 import com.ai.keyboard.presentation.keyboard.SymbolKeyboard
+import com.ai.keyboard.presentation.screen.fix_grammar.FixGrammarScreen
 import com.ai.keyboard.presentation.theme.AIKeyboardTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -63,6 +65,18 @@ fun KeyboardScreen(
                 .navigationBarsPadding()
         ) {
             // Suggestion Bar
+
+            OptionBar(
+                onGrammarClick = { viewModel.handleIntent(KeyboardIntent.FixGrammarPressed) },
+                onMagicClick = {},
+                onTranslateClick = {},
+                onChatClick = {},
+                onClipboardClick = {},
+                onEmojiClick = {},
+                onDotClick = {},
+                onMicClick = {}
+            )
+            // Suggestion Bar - only recompose when suggestions change
             SuggestionBar(
                 suggestions = suggestions,
                 onSuggestionClick = { suggestion ->
@@ -90,6 +104,13 @@ fun KeyboardScreen(
                     ExtendedSymbolKeyboard(
                         onIntent = { viewModel.handleIntent(it) },
                         modifier = Modifier.fillMaxWidth()
+                    )
+                }
+                KeyboardMode.FIX_GRAMMAR -> {
+                    FixGrammarScreen(
+                        uiState = uiState,
+                        viewModel = viewModel,
+                        onBackButtonClick = { viewModel.handleIntent(KeyboardIntent.AlphabetPressed) },
                     )
                 }
 

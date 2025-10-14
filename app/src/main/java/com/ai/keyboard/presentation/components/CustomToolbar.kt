@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import com.ai.keyboard.R
+import com.ai.keyboard.presentation.model.LanguageType
 import com.ai.keyboard.presentation.theme.DropdownGradient
 
 @Composable
@@ -46,9 +47,9 @@ fun CustomToolbar(
     modifier: Modifier = Modifier,
     title: String = "Fix Grammar",
     onBackButtonClicked: () -> Unit,
-    selectedLanguage: String = "English",
-    languages: List<String> = listOf("English", "Spanish", "Bangla", "French", "German"),
-    onLanguageSelected: (String) -> Unit = {}
+    languages: List<LanguageType> = LanguageType.values().toList(),
+    selectedLanguage: LanguageType = LanguageType.ENGLISH,
+    onLanguageSelected: (LanguageType) -> Unit = {}
 ) {
     var expanded by remember { mutableStateOf(false) }
     var anchorPosition by remember { mutableStateOf(IntOffset.Zero) }
@@ -100,12 +101,13 @@ fun CustomToolbar(
 
             ) {
                 Image(
-                  painter = painterResource(id = R.drawable.ic_language),
+                    painter = painterResource(id = R.drawable.ic_language),
                     contentDescription = "Expand",
                     modifier = Modifier.size(30.dp)
                 )
                 Row(
-                    modifier=modifier  .clip(RoundedCornerShape(50))
+                    modifier = modifier
+                        .clip(RoundedCornerShape(50))
                         .border(
                             width = 1.dp,
                             brush = DropdownGradient,
@@ -117,7 +119,7 @@ fun CustomToolbar(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text(selectedLanguage, style = MaterialTheme.typography.bodyMedium)
+                    Text(selectedLanguage.displayName, style = MaterialTheme.typography.bodyMedium)
                     Icon(
                         imageVector = if (expanded) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
                         contentDescription = "Expand",
@@ -146,7 +148,7 @@ fun CustomToolbar(
                 ) {
                     languages.forEach { language ->
                         Text(
-                            text = language,
+                            text = language.displayName,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
@@ -167,7 +169,7 @@ fun CustomToolbar(
 @Preview(showBackground = true)
 @Composable
 fun GrammarToolbarPreview() {
-    var selectedLanguage by remember { mutableStateOf("English") }
+    var selectedLanguage by remember { mutableStateOf(LanguageType.ENGLISH) }
 
     MaterialTheme {
         CustomToolbar(
