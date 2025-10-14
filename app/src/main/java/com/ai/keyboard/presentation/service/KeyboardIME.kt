@@ -1,6 +1,5 @@
 package com.ai.keyboard.presentation.service
 
-import android.content.Context
 import android.inputmethodservice.InputMethodService
 import android.media.AudioManager
 import android.os.Build
@@ -24,7 +23,6 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import com.ai.keyboard.presentation.screen.keyboard.KeyboardIntent
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardScreen
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardViewModel
 import org.koin.android.ext.android.inject
@@ -40,16 +38,16 @@ class KeyboardIME : InputMethodService(),
     private val vibrator: Vibrator by lazy {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager =
-                getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+                getSystemService(VIBRATOR_MANAGER_SERVICE) as VibratorManager
             vibratorManager.defaultVibrator
         } else {
             @Suppress("DEPRECATION")
-            getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+            getSystemService(VIBRATOR_SERVICE) as Vibrator
         }
     }
 
     private val audioManager: AudioManager by lazy {
-        getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        getSystemService(AUDIO_SERVICE) as AudioManager
     }
 
     // Lifecycle
@@ -80,13 +78,9 @@ class KeyboardIME : InputMethodService(),
     }
 
     override fun onCreateInputView(): View {
-        // Ensure lifecycle is at least STARTED before creating ComposeView
-        if (lifecycleRegistry.currentState < Lifecycle.State.STARTED) {
-            lifecycleRegistry.currentState = Lifecycle.State.STARTED
-        }
+        lifecycleRegistry.currentState = Lifecycle.State.STARTED
 
         composeView = ComposeView(this).apply {
-            // Set the lifecycle owners before setting content
             setViewTreeLifecycleOwner(this@KeyboardIME)
             setViewTreeViewModelStoreOwner(this@KeyboardIME)
             setViewTreeSavedStateRegistryOwner(this@KeyboardIME)
@@ -114,6 +108,9 @@ class KeyboardIME : InputMethodService(),
     override fun onStartInputView(info: EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
+
+        // Don't initialize text - let InputConnection manage it
+        viewModel.resetText()
     }
 
     override fun onUpdateSelection(
@@ -132,8 +129,21 @@ class KeyboardIME : InputMethodService(),
             candidatesStart,
             candidatesEnd
         )
-        if (newSelStart != -1) {
-            viewModel.handleIntent(KeyboardIntent.CursorPositionChanged(newSelStart))
+
+        // Update cursor position in ViewModel
+        if (newSelStart != -1 && newSelStart == newSelEnd) {
+            // Get current text from InputConnection
+            val ic = currentInputConnection
+            if (ic != null) {
+                try {
+                    val textBefore = ic.getTextBeforeCursor(10000, 0)?.toString() ?: ""
+                    val textAfter = ic.getTextAfterCursor(10000, 0)?.toString() ?: ""
+                    val fullText = textBefore + textAfter
+                    viewModel.syncWithInputConnection(fullText, newSelStart)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
     }
 
@@ -143,24 +153,34 @@ class KeyboardIME : InputMethodService(),
     }
 
     override fun onDestroy() {
-        super.onDestroy()
         lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
         store.clear()
+        super.onDestroy()
     }
 
     private fun commitText(text: String, newCursorPosition: Int) {
         val ic: InputConnection = currentInputConnection ?: return
 
-        ic.beginBatchEdit()
-        ic.deleteSurroundingText(Int.MAX_VALUE, Int.MAX_VALUE) // Clear the entire field
-        ic.commitText(text, 1)
-        ic.setSelection(newCursorPosition, newCursorPosition)
-        ic.endBatchEdit()
+        try {
+            if (text == "BACKSPACE") {
+                // Handle backspace
+                ic.deleteSurroundingText(1, 0)
+            } else {
+                // Commit the character directly
+                ic.commitText(text, 1)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun moveCursor(position: Int) {
         val ic: InputConnection = currentInputConnection ?: return
-        ic.setSelection(position, position)
+        try {
+            ic.setSelection(position, position)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun performFeedback(hapticEnabled: Boolean, soundEnabled: Boolean) {

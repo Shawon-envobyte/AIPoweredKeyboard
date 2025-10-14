@@ -2,7 +2,6 @@ package com.ai.keyboard.presentation.screen.keyboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ai.keyboard.core.util.ResultWrapper
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
 import com.ai.keyboard.domain.model.KeyboardState
@@ -42,13 +41,42 @@ class KeyboardViewModel(
         setupSuggestionDebouncing()
     }
 
-    fun rephraseContent() {
-        viewModelScope.launch {
-            val currentText = _uiState.value.keyboardState.currentText
-            val result = rephraseContentUseCase(currentText, "Friendly", "English")
-            if (result is ResultWrapper.Success) {
+    fun initializeText(text: String, cursorPosition: Int) {
+        updateKeyboardState {
+            copy(
+                currentText = text,
+                cursorPosition = cursorPosition.coerceIn(0, text.length)
+            )
+        }
+    }
 
-            }
+    fun resetText() {
+        updateKeyboardState {
+            copy(
+                currentText = "",
+                cursorPosition = 0
+            )
+        }
+    }
+
+    fun syncWithInputConnection(text: String, cursorPosition: Int) {
+        updateKeyboardState {
+            copy(
+                currentText = text,
+                cursorPosition = cursorPosition.coerceIn(0, text.length)
+            )
+        }
+    }
+
+    @OptIn(FlowPreview::class)
+    private fun setupSuggestionDebouncing() {
+        viewModelScope.launch {
+            textChangeChannel.receiveAsFlow()
+                .debounce(200)
+                .distinctUntilChanged()
+                .collect { text ->
+                    fetchSuggestions(text)
+                }
         }
     }
 
@@ -75,19 +103,6 @@ class KeyboardViewModel(
             settingsRepository.isNumberRowEnabled().collect { enabled ->
                 updateKeyboardState { copy(isNumberRowEnabled = enabled) }
             }
-        }
-
-    }
-
-    @OptIn(FlowPreview::class)
-    private fun setupSuggestionDebouncing() {
-        viewModelScope.launch {
-            textChangeChannel.receiveAsFlow()
-                .debounce(150)
-                .distinctUntilChanged()
-                .collect { text ->
-                    fetchSuggestions(text)
-                }
         }
     }
 
@@ -124,6 +139,7 @@ class KeyboardViewModel(
         var currentText = currentState.currentText
         var cursorPosition = currentState.cursorPosition
         var textChanged = true
+        var characterToCommit = ""
 
         when (action) {
             is KeyAction.Character -> {
@@ -131,37 +147,42 @@ class KeyboardViewModel(
                     KeyboardMode.UPPERCASE, KeyboardMode.CAPS_LOCK -> action.char.uppercase()
                     else -> action.char
                 }
-                // Optimize string manipulation
-                val sb = StringBuilder(currentText)
-                sb.insert(cursorPosition, char)
-                currentText = sb.toString()
+
+                currentText = StringBuilder(currentText).apply {
+                    insert(cursorPosition, char)
+                }.toString()
                 cursorPosition += char.length
+                characterToCommit = char
             }
 
             is KeyAction.Backspace -> {
                 if (cursorPosition > 0 && currentText.isNotEmpty()) {
-                    // Optimize string manipulation
-                    val sb = StringBuilder(currentText)
-                    sb.deleteCharAt(cursorPosition - 1)
-                    currentText = sb.toString()
+                    currentText = StringBuilder(currentText).apply {
+                        deleteCharAt(cursorPosition - 1)
+                    }.toString()
                     cursorPosition--
+                    // For backspace, we'll handle it differently
+                    onTextChangeListener?.invoke("BACKSPACE", cursorPosition)
+                    textChanged = false // Don't trigger normal flow
                 } else {
                     textChanged = false
                 }
             }
 
             is KeyAction.Enter -> {
-                val sb = StringBuilder(currentText)
-                sb.insert(cursorPosition, "\n")
-                currentText = sb.toString()
+                currentText = StringBuilder(currentText).apply {
+                    insert(cursorPosition, "\n")
+                }.toString()
                 cursorPosition += 1
+                characterToCommit = "\n"
             }
 
             is KeyAction.Space -> {
-                val sb = StringBuilder(currentText)
-                sb.insert(cursorPosition, " ")
-                currentText = sb.toString()
+                currentText = StringBuilder(currentText).apply {
+                    insert(cursorPosition, " ")
+                }.toString()
                 cursorPosition += 1
+                characterToCommit = " "
             }
 
             is KeyAction.MoveCursor -> {
@@ -170,57 +191,71 @@ class KeyboardViewModel(
                 textChanged = false
             }
 
-            is KeyAction.InsertSuggestion -> {
-                currentText = currentText.replaceRange(cursorPosition, cursorPosition, action.text)
-                cursorPosition += action.text.length
-            }
-
             KeyAction.Shift, KeyAction.Symbol, KeyAction.ExtendedSymbol -> {
                 textChanged = false
             }
+
+            is KeyAction.InsertSuggestion -> {
+
+            }
         }
 
-        updateKeyboardState { copy(currentText = currentText, cursorPosition = cursorPosition) }
+        updateKeyboardState {
+            copy(
+                currentText = currentText,
+                cursorPosition = cursorPosition
+            )
+        }
 
-        if (textChanged) {
-            onTextChangeListener?.invoke(currentText, cursorPosition)
-            // Use trySend instead of send to avoid blocking
+        if (textChanged && characterToCommit.isNotEmpty()) {
+            // Send only the character to commit, not the full text
+            onTextChangeListener?.invoke(characterToCommit, cursorPosition)
             textChangeChannel.trySend(currentText)
-        } else {
+        } else if (!textChanged && action !is KeyAction.Backspace) {
             onCursorChangeListener?.invoke(cursorPosition)
         }
 
         onKeyPressListener?.invoke()
 
+        // Auto-shift after character
         if (currentState.mode == KeyboardMode.UPPERCASE && action is KeyAction.Character) {
             updateMode(KeyboardMode.LOWERCASE)
         }
     }
 
-    private fun updateText(text: String) {
-        updateKeyboardState {
-            copy(
-                currentText = text,
-                cursorPosition = text.length
-            )
-        }
-        onTextChangeListener?.invoke(text, text.length)
-    }
-
     private fun updateCursorPosition(position: Int) {
-        updateKeyboardState { copy(cursorPosition = position) }
+        val currentText = _uiState.value.keyboardState.currentText
+        val validPosition = position.coerceIn(0, currentText.length)
+        updateKeyboardState { copy(cursorPosition = validPosition) }
     }
 
     private fun insertSuggestion(suggestion: String) {
-        val currentText = _uiState.value.keyboardState.currentText
-        val words = currentText.split(" ")
-        val newText = if (words.isNotEmpty()) {
-            words.dropLast(1).joinToString(" ") +
-                    (if (words.size > 1) " " else "") + suggestion + " "
-        } else {
-            "$suggestion "
+        val currentState = _uiState.value.keyboardState
+        val currentText = currentState.currentText
+        val cursorPos = currentState.cursorPosition
+
+        // Find the start of the current word
+        var wordStart = cursorPos
+        while (wordStart > 0 && currentText[wordStart - 1].isLetterOrDigit()) {
+            wordStart--
         }
-        updateText(newText)
+
+        // Replace current word with suggestion
+        val newText = StringBuilder(currentText).apply {
+            delete(wordStart, cursorPos)
+            insert(wordStart, "$suggestion ")
+        }.toString()
+
+        val newCursorPos = wordStart + suggestion.length + 1
+
+        updateKeyboardState {
+            copy(
+                currentText = newText,
+                cursorPosition = newCursorPos
+            )
+        }
+
+        onTextChangeListener?.invoke(newText, newCursorPos)
         onKeyPressListener?.invoke()
         textChangeChannel.trySend(newText)
     }
@@ -238,9 +273,10 @@ class KeyboardViewModel(
 
     private fun toggleNumerRow() {
         val currentState = _uiState.value.keyboardState
-        updateKeyboardState { copy(isNumberRowEnabled = !currentState.isNumberRowEnabled) }
+        val newValue = !currentState.isNumberRowEnabled
+        updateKeyboardState { copy(isNumberRowEnabled = newValue) }
         viewModelScope.launch {
-            settingsRepository.saveNumberRowEnabled(!currentState.isNumberRowEnabled)
+            settingsRepository.saveNumberRowEnabled(newValue)
         }
     }
 
@@ -272,6 +308,11 @@ class KeyboardViewModel(
     }
 
     private fun fetchSuggestions(text: String) {
+        if (text.isBlank()) {
+            _uiState.update { it.copy(suggestions = emptyList()) }
+            return
+        }
+
         viewModelScope.launch(Dispatchers.Default) {
             _uiState.update { it.copy(isLoading = true) }
 

@@ -32,14 +32,18 @@ fun KeyboardScreen(
     viewModel: KeyboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    
-    // Optimize by using derivedStateOf for expensive computations
+
+    // Optimize recomposition
     val keyboardMode by remember {
         derivedStateOf { uiState.keyboardState.mode }
     }
-    
+
     val suggestions by remember {
         derivedStateOf { uiState.suggestions }
+    }
+
+    val isNumberRowEnabled by remember {
+        derivedStateOf { uiState.keyboardState.isNumberRowEnabled }
     }
 
     LaunchedEffect(Unit) {
@@ -56,7 +60,7 @@ fun KeyboardScreen(
                 .padding(vertical = 4.dp, horizontal = 2.dp)
                 .navigationBarsPadding()
         ) {
-            // Suggestion Bar - only recompose when suggestions change
+            // Suggestion Bar
             SuggestionBar(
                 suggestions = suggestions,
                 onSuggestionClick = { suggestion ->
@@ -71,7 +75,7 @@ fun KeyboardScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Keyboard Layout - only recompose when mode changes
+            // Keyboard Layout
             when (keyboardMode) {
                 KeyboardMode.SYMBOLS -> {
                     SymbolKeyboard(
@@ -90,7 +94,7 @@ fun KeyboardScreen(
                 else -> {
                     AlphabeticKeyboard(
                         mode = keyboardMode,
-                        isNumberRowEnabled = uiState.keyboardState.isNumberRowEnabled,
+                        isNumberRowEnabled = isNumberRowEnabled,
                         onIntent = { viewModel.handleIntent(it) },
                         modifier = Modifier.fillMaxWidth()
                     )
