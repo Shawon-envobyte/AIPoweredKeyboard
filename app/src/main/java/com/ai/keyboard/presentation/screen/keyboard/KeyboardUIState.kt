@@ -13,4 +13,5 @@ data class KeyboardUIState(
     val correctedText: String = "",
     val language: LanguageType = LanguageType.ENGLISH,
     val selectedAction: ActionButtonType = ActionButtonType.REPHRASE,
+    val inputFieldText: String = ""
 )

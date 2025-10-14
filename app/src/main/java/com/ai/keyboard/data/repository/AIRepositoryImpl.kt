@@ -6,6 +6,8 @@ import com.ai.keyboard.data.mapper.contentRephraseSystemPrompt
 import com.ai.keyboard.data.mapper.fixGrammarPrompt
 import com.ai.keyboard.data.mapper.fixGrammarSystemPrompt
 import com.ai.keyboard.data.mapper.toAPIRequest
+import com.ai.keyboard.data.mapper.wordTonePrompt
+import com.ai.keyboard.data.mapper.wordToneSystemPrompt
 import com.ai.keyboard.data.source.local.CacheManager
 import com.ai.keyboard.data.source.local.LocalAIEngine
 import com.ai.keyboard.data.source.remote.api.APIDataSource
@@ -102,6 +104,25 @@ class AIRepositoryImpl(
                     language = language,
                     action = action
                 ).toAPIRequest(fixGrammarSystemPrompt())
+            )
+            ResultWrapper.Success(response.candidates.first().content.parts.first().text)
+        } catch (e: Exception) {
+            ResultWrapper.Failure(e.message ?: "Unknown error")
+        }
+    }
+
+    override suspend fun wordTone(
+        content: String,
+        language: String,
+        action: String
+    ): ResultWrapper<String> {
+        return try {
+            val response = remoteSource.getResponseFromAPI(
+                request = wordTonePrompt(
+                    content = content,
+                    language = language,
+                    action = action
+                ).toAPIRequest(wordToneSystemPrompt())
             )
             ResultWrapper.Success(response.candidates.first().content.parts.first().text)
         } catch (e: Exception) {
