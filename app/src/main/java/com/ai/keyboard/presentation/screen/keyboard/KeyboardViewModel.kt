@@ -141,6 +141,7 @@ class KeyboardViewModel(
             is KeyboardIntent.ToggleSound -> toggleSound()
             is KeyboardIntent.CursorPositionChanged -> updateCursorPosition(intent.position)
             is KeyboardIntent.ToggleNumerRow -> toggleNumerRow()
+            is KeyboardIntent.EmojiPressed -> toggleEmoji()
             is KeyboardIntent.FixGrammarPressed -> toggleFixGrammar()
         }
     }
@@ -209,13 +210,14 @@ class KeyboardViewModel(
                 textChanged = false
             }
 
-            KeyAction.Shift, KeyAction.Symbol, KeyAction.ExtendedSymbol -> {
+            KeyAction.Shift, KeyAction.Symbol, KeyAction.Emoji, KeyAction.ExtendedSymbol -> {
                 textChanged = false
             }
 
             is KeyAction.InsertSuggestion -> {
 
             }
+
         }
 
         updateKeyboardState {
@@ -308,6 +310,17 @@ class KeyboardViewModel(
         }
         updateMode(newMode)
     }
+
+    private fun toggleEmoji() {
+        val currentMode = _uiState.value.keyboardState.mode
+        val newMode = if (currentMode == KeyboardMode.EMOJI) {
+            KeyboardMode.LOWERCASE
+        } else {
+            KeyboardMode.EMOJI
+        }
+        updateMode(newMode)
+    }
+
 
     private fun toggleExtendedSymbol() {
         val currentMode = _uiState.value.keyboardState.mode

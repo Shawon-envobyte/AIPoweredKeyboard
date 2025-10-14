@@ -19,6 +19,7 @@ import com.ai.keyboard.domain.model.KeyboardMode
 import com.ai.keyboard.presentation.components.OptionBar
 import com.ai.keyboard.presentation.components.SuggestionBar
 import com.ai.keyboard.presentation.keyboard.AlphabeticKeyboard
+import com.ai.keyboard.presentation.keyboard.EmojiKeyboard
 import com.ai.keyboard.presentation.keyboard.ExtendedSymbolKeyboard
 import com.ai.keyboard.presentation.keyboard.SymbolKeyboard
 import com.ai.keyboard.presentation.screen.fix_grammar.FixGrammarScreen
@@ -72,7 +73,7 @@ fun KeyboardScreen(
                 onTranslateClick = {},
                 onChatClick = {},
                 onClipboardClick = {},
-                onEmojiClick = {},
+                onEmojiClick = { viewModel.handleIntent(KeyboardIntent.EmojiPressed) },
                 onDotClick = {},
                 onMicClick = {}
             )
@@ -111,6 +112,13 @@ fun KeyboardScreen(
                         uiState = uiState,
                         viewModel = viewModel,
                         onBackButtonClick = { viewModel.handleIntent(KeyboardIntent.AlphabetPressed) },
+                    )
+                }
+
+                KeyboardMode.EMOJI -> {
+                    EmojiKeyboard(
+                        onIntent = { viewModel.handleIntent(it) },
+                        modifier = Modifier.fillMaxWidth()
                     )
                 }
 
