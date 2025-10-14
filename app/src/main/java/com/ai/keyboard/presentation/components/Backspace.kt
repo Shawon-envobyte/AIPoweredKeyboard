@@ -2,6 +2,7 @@ package com.ai.keyboard.presentation.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
@@ -11,6 +12,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -18,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,10 +36,12 @@ fun Backspace(
     initialDelay: Long = 200L,                // wait before repeating starts
     initialInterval: Long = 100L,             // first repeat interval
     minInterval: Long = 30L,                  // fastest repeat
-    accelerateBy: Float = 0.90f               // 0.88 => ~12% faster each tick
+    accelerateBy: Float = 0.90f,              // 0.88 => ~12% faster each tick
+    onSelectionSwipe: (Int) -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     var isRepeating by remember { mutableStateOf(false) }
+    var accumulatedDrag by remember { mutableFloatStateOf(0f) }
 
     // Start/stop the repeating loop
     LaunchedEffect(isRepeating) {
@@ -79,7 +84,21 @@ fun Backspace(
                 onLongClick = {
                     if (onRepeat != null) isRepeating = true
                 }
-            ),
+            )
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragStart = { accumulatedDrag = 0f },
+                    onHorizontalDrag = { _, dragAmount ->
+                        accumulatedDrag += dragAmount
+                        val threshold = 20f
+                        val moves = (accumulatedDrag / threshold).toInt()
+                        if (moves != 0) {
+                            onSelectionSwipe(moves)
+                            accumulatedDrag -= moves * threshold
+                        }
+                    }
+                )
+            },
         contentAlignment = Alignment.Center
     ) {
         Text(

@@ -91,6 +91,7 @@ class KeyboardIME : InputMethodService(),
                 KeyboardScreen(
                     onTextChange = ::commitText,
                     onCursorChange = ::moveCursor,
+                    onTextSelectAndDelete = ::selectAndDelete,
                     onKeyPress = {
                         performFeedback(
                             hapticEnabled = uiState.keyboardState.isHapticEnabled,
@@ -178,6 +179,17 @@ class KeyboardIME : InputMethodService(),
         val ic: InputConnection = currentInputConnection ?: return
         try {
             ic.setSelection(position, position)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun selectAndDelete(amount: Int) {
+        val ic: InputConnection = currentInputConnection ?: return
+        try {
+            if (amount < 0) {
+                ic.deleteSurroundingText(-amount, 0)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }

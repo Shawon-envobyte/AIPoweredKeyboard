@@ -34,6 +34,7 @@ class KeyboardViewModel(
 
     private var onTextChangeListener: ((String, Int) -> Unit)? = null
     private var onCursorChangeListener: ((Int) -> Unit)? = null
+    private var onTextSelectAndDeleteListener: ((Int) -> Unit)? = null
     private var onKeyPressListener: (() -> Unit)? = null
 
     init {
@@ -114,6 +115,10 @@ class KeyboardViewModel(
         onCursorChangeListener = listener
     }
 
+    fun setOnTextSelectAndDeleteListener(listener: (Int) -> Unit) {
+        onTextSelectAndDeleteListener = listener
+    }
+
     fun setOnKeyPressListener(listener: () -> Unit) {
         onKeyPressListener = listener
     }
@@ -188,6 +193,13 @@ class KeyboardViewModel(
             is KeyAction.MoveCursor -> {
                 val newPosition = cursorPosition + action.amount
                 cursorPosition = newPosition.coerceIn(0, currentText.length)
+                textChanged = false
+            }
+
+            is KeyAction.SelectAndDelete -> {
+                val newPosition = cursorPosition + action.amount
+                cursorPosition = newPosition.coerceIn(0, currentText.length)
+                onTextSelectAndDeleteListener?.invoke(action.amount)
                 textChanged = false
             }
 
