@@ -9,5 +9,7 @@ enum class KeyboardMode {
     NUMBERS,
     FIX_GRAMMAR,
     EMOJI,
-    REWRITE
+    REWRITE,
+    AI_ASSISTANCE,
+    TRANSLATE
 }

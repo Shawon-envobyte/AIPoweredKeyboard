@@ -3,7 +3,7 @@ package com.ai.keyboard.domain.usecase
 import com.ai.keyboard.core.util.ResultWrapper
 import com.ai.keyboard.domain.repository.AIRepository
 
-class GetWordToneUseCase(
+class GetAiWritingAssistanceUseCase(
     private val repository: AIRepository
 ) {
     suspend operator fun invoke(
@@ -15,7 +15,7 @@ class GetWordToneUseCase(
             return ResultWrapper.Success(content) // Return original text if empty
         }
 
-        return repository.wordTone(
+        return repository.aiWritingAssistance(
             content = content,
             language = language,
             action = action

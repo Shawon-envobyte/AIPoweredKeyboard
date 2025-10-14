@@ -1,4 +1,4 @@
-package com.ai.keyboard.presentation.screen.word_tone
+package com.ai.keyboard.presentation.screen.translate
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -8,16 +8,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.ai.keyboard.R
-import com.ai.keyboard.presentation.components.ActionButtonRow
 import com.ai.keyboard.presentation.components.ContentCard
 import com.ai.keyboard.presentation.components.CustomBottomBar
 import com.ai.keyboard.presentation.components.CustomToolbar
-import com.ai.keyboard.presentation.model.WordToneType
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardUIState
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardViewModel
 
 @Composable
-fun WordToneScreen(
+fun TranslateScreen(
     uiState: KeyboardUIState,
     viewModel: KeyboardViewModel,
     onBackButtonClick: () -> Unit,
@@ -26,7 +24,7 @@ fun WordToneScreen(
         viewModel.getWordTone()
 
     }
-    WordToneScreenContent(
+    TranslateScreenContent(
         uiState = uiState,
         viewModel = viewModel,
         onBackButtonClick = onBackButtonClick,
@@ -34,7 +32,7 @@ fun WordToneScreen(
 }
 
 @Composable
-fun WordToneScreenContent(
+fun TranslateScreenContent(
     uiState: KeyboardUIState,
     viewModel: KeyboardViewModel,
     onBackButtonClick: () -> Unit,
@@ -45,21 +43,11 @@ fun WordToneScreenContent(
     ) {
 
 
-
         CustomToolbar(
             title = stringResource(R.string.word_tone),
             onBackButtonClicked = onBackButtonClick,
             selectedLanguage = uiState.language,
             onLanguageSelected = { viewModel.onLanguageSelected(it) }
-        )
-        ActionButtonRow(
-            actions = WordToneType.entries.map { it },
-            selectedAction = WordToneType.REWRITE,
-            onActionClick = { viewModel.onSelectedWordActionChange(it) },
-            labelProvider = { it.label },
-            iconProvider = { it.icon },
-            emojiProvider = { it.emoji },
-            gradientProvider = { it.isGradient }
         )
         ContentCard(
             showButton = true,
