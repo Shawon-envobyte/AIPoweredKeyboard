@@ -1,6 +1,5 @@
-package com.ai.keyboard.presentation.screen.fix_grammar
+package com.ai.keyboard.presentation.screen.word_tone
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -13,12 +12,12 @@ import com.ai.keyboard.presentation.components.ActionButtonRow
 import com.ai.keyboard.presentation.components.ContentCard
 import com.ai.keyboard.presentation.components.CustomBottomBar
 import com.ai.keyboard.presentation.components.CustomToolbar
-import com.ai.keyboard.presentation.model.ActionButtonType
+import com.ai.keyboard.presentation.model.WordToneType
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardUIState
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardViewModel
 
 @Composable
-fun FixGrammarScreen(
+fun WordToneScreen(
     uiState: KeyboardUIState,
     viewModel: KeyboardViewModel,
     onBackButtonClick: () -> Unit,
@@ -27,7 +26,7 @@ fun FixGrammarScreen(
         viewModel.getGrammar()
 
     }
-    FixGrammarScreenContent(
+    WordToneScreenContent(
         uiState = uiState,
         viewModel = viewModel,
         onBackButtonClick = onBackButtonClick,
@@ -35,41 +34,40 @@ fun FixGrammarScreen(
 }
 
 @Composable
-fun FixGrammarScreenContent(
+fun WordToneScreenContent(
     uiState: KeyboardUIState,
     viewModel: KeyboardViewModel,
     onBackButtonClick: () -> Unit,
 ) {
 
-    Column {
+    Column(
+        modifier = Modifier.padding(horizontal = 10.dp)
+    ) {
+
 
 
         CustomToolbar(
-            title = stringResource(R.string.fix_grammar),
+            title = stringResource(R.string.word_tone),
             onBackButtonClicked = onBackButtonClick,
             selectedLanguage = uiState.language,
             onLanguageSelected = { viewModel.onLanguageSelected(it) }
         )
         ActionButtonRow(
-            actions = ActionButtonType.entries.map { it },
-            selectedAction = uiState.selectedAction,
-            onActionClick = { viewModel.onSelectedActionChange(it) },
+            actions = WordToneType.entries.map { it },
+            selectedAction = WordToneType.REWRITE,
+            onActionClick = { println("Clicked: ${it.name}") },
             labelProvider = { it.label },
             iconProvider = { it.icon },
             emojiProvider = { it.emoji },
             gradientProvider = { it.isGradient }
         )
-        Box(
-            modifier = Modifier.padding(horizontal = 10.dp)
-        ) {
-            ContentCard(
-                text = uiState.correctedText,
-                buttonText = "Replace Text",
-                onButtonClick = {
-                    viewModel.replaceCurrentInputWith(uiState.correctedText)
-                }
-            )
-        }
+        ContentCard(
+            showButton = true,
+            text = uiState.correctedText,
+            buttonText = "Replace Text",
+            onButtonClick = { viewModel.replaceCurrentInputWith(uiState.correctedText) }
+        )
+
         CustomBottomBar(
             onBackButtonClick = onBackButtonClick,
         )
@@ -77,4 +75,3 @@ fun FixGrammarScreenContent(
     }
 
 }
-

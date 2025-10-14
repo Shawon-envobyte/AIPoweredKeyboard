@@ -17,4 +17,5 @@ sealed class KeyboardIntent {
     object ToggleSound : KeyboardIntent()
     object ToggleNumerRow : KeyboardIntent()
     object FixGrammarPressed : KeyboardIntent()
+    object RewritePressed : KeyboardIntent()
 }

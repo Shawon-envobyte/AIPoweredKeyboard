@@ -23,6 +23,7 @@ import com.ai.keyboard.presentation.keyboard.EmojiKeyboard
 import com.ai.keyboard.presentation.keyboard.ExtendedSymbolKeyboard
 import com.ai.keyboard.presentation.keyboard.SymbolKeyboard
 import com.ai.keyboard.presentation.screen.fix_grammar.FixGrammarScreen
+import com.ai.keyboard.presentation.screen.word_tone.WordToneScreen
 import com.ai.keyboard.presentation.theme.AIKeyboardTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -69,7 +70,7 @@ fun KeyboardScreen(
 
             OptionBar(
                 onGrammarClick = { viewModel.handleIntent(KeyboardIntent.FixGrammarPressed) },
-                onMagicClick = {},
+                onMagicClick = { viewModel.handleIntent(KeyboardIntent.RewritePressed) },
                 onTranslateClick = {},
                 onChatClick = {},
                 onClipboardClick = {},
@@ -121,7 +122,13 @@ fun KeyboardScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-
+                KeyboardMode.REWRITE -> {
+                    WordToneScreen(
+                        uiState = uiState,
+                        viewModel = viewModel,
+                        onBackButtonClick = { viewModel.handleIntent(KeyboardIntent.AlphabetPressed) },
+                    )
+                }
                 else -> {
                     AlphabeticKeyboard(
                         mode = keyboardMode,
