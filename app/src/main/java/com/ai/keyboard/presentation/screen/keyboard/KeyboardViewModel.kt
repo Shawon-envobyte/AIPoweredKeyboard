@@ -2,13 +2,17 @@ package com.ai.keyboard.presentation.screen.keyboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ai.keyboard.core.util.ResultWrapper
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
 import com.ai.keyboard.domain.model.KeyboardState
 import com.ai.keyboard.domain.model.KeyboardTheme
 import com.ai.keyboard.domain.repository.SettingsRepository
+import com.ai.keyboard.domain.usecase.FixGrammarUseCase
 import com.ai.keyboard.domain.usecase.GetSuggestionsUseCase
 import com.ai.keyboard.domain.usecase.RephraseContentUseCase
+import com.ai.keyboard.presentation.model.ActionButtonType
+import com.ai.keyboard.presentation.model.LanguageType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
@@ -24,7 +28,8 @@ import kotlinx.coroutines.launch
 class KeyboardViewModel(
     private val getSuggestionsUseCase: GetSuggestionsUseCase,
     private val rephraseContentUseCase: RephraseContentUseCase,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val fixGrammarUseCase: FixGrammarUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(KeyboardUIState())
@@ -136,6 +141,7 @@ class KeyboardViewModel(
             is KeyboardIntent.ToggleSound -> toggleSound()
             is KeyboardIntent.CursorPositionChanged -> updateCursorPosition(intent.position)
             is KeyboardIntent.ToggleNumerRow -> toggleNumerRow()
+            is KeyboardIntent.FixGrammarPressed -> toggleFixGrammar()
         }
     }
 
@@ -223,6 +229,7 @@ class KeyboardViewModel(
             // Send only the character to commit, not the full text
             onTextChangeListener?.invoke(characterToCommit, cursorPosition)
             textChangeChannel.trySend(currentText)
+
         } else if (!textChanged && action !is KeyAction.Backspace) {
             onCursorChangeListener?.invoke(cursorPosition)
         }
@@ -315,6 +322,10 @@ class KeyboardViewModel(
         updateMode(KeyboardMode.LOWERCASE)
     }
 
+    private fun toggleFixGrammar() {
+        updateMode(KeyboardMode.FIX_GRAMMAR)
+    }
+
     private fun updateMode(mode: KeyboardMode) {
         updateKeyboardState { copy(mode = mode) }
     }
@@ -372,5 +383,51 @@ class KeyboardViewModel(
         _uiState.update { state ->
             state.copy(keyboardState = state.keyboardState.update())
         }
+    }
+
+
+    fun getGrammar() {
+        val currentState = _uiState.value.keyboardState
+        var currentText = currentState.currentText
+        viewModelScope.launch {
+            val result = fixGrammarUseCase(
+                content = currentText,
+                language = _uiState.value.language.name,
+                action = _uiState.value.selectedAction.name
+            )
+
+            when (result) {
+                is ResultWrapper.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        correctedText = result.data,
+                        error = ""
+                    )
+                }
+
+                is ResultWrapper.Failure -> {
+                    _uiState.value = _uiState.value.copy(
+                        error = result.message
+                    )
+                }
+
+                is ResultWrapper.Loading -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = true
+                    )
+                }
+            }
+        }
+    }
+
+    fun onLanguageSelected(language: LanguageType) {
+        _uiState.value = _uiState.value.copy(
+            language = language
+        )
+    }
+
+    fun onSelectedActionChange(action: ActionButtonType) {
+        _uiState.value = _uiState.value.copy(
+            selectedAction = action
+        )
     }
 }

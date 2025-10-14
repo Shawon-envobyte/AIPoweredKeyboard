@@ -6,5 +6,6 @@ enum class KeyboardMode {
     CAPS_LOCK,
     SYMBOLS,
     EXTENDED_SYMBOLS,
-    NUMBERS
+    NUMBERS,
+    FIX_GRAMMAR
 }

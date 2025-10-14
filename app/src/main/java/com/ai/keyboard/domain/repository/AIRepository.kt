@@ -24,4 +24,10 @@ interface AIRepository {
         language: String,
         tone: String
     ): ResultWrapper<String>
+
+        suspend fun fixGrammar(
+        content: String,
+        language: String,
+        action: String
+    ): ResultWrapper<String>
 }

@@ -24,17 +24,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ai.keyboard.R
+import com.ai.keyboard.presentation.model.ActionButtonType
 import com.ai.keyboard.presentation.theme.DropdownGradient
 import com.ai.keyboard.presentation.theme.VeryLightGray
 
 @Composable
 fun ActionButtonRow(
     modifier: Modifier = Modifier,
-    actions: List<ActionButtonData>,
-    onActionClick: (ActionButtonData) -> Unit
+    actions: List<ActionButtonType>,
+    selectedAction: ActionButtonType? = null,
+    onActionClick: (ActionButtonType) -> Unit
 ) {
-    var selectedAction by remember { mutableStateOf<ActionButtonData?>(null) }
+    var selectedAction by remember { mutableStateOf(selectedAction) }
 
     Row(
         modifier = modifier
@@ -59,7 +60,7 @@ fun ActionButtonRow(
 
 @Composable
 fun ActionButtonItem(
-    action: ActionButtonData,
+    action: ActionButtonType,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -108,25 +109,15 @@ fun ActionButtonItem(
     }
 }
 
-data class ActionButtonData(
-    val label: String,
-    val emoji: String? = null,
-    val icon: Int? = null,
-    val isGradient: Boolean = false
-)
 
 @Preview(showBackground = true)
 @Composable
 fun ActionButtonRowPreview() {
-    val actions = listOf(
-        ActionButtonData(label = "Rephrase", icon = R.drawable.ic_magic),
-        ActionButtonData(label = "Grammar Fix", emoji = "🛠️"),
-        ActionButtonData(label = "Add emoji", emoji = "🤗")
-    )
+
 
     MaterialTheme {
         ActionButtonRow(
-            actions = actions,
+            actions = ActionButtonType.entries.map { it },
             onActionClick = { println("Clicked: ${it.label}") }
         )
     }
