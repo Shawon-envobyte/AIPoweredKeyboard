@@ -9,8 +9,11 @@ import android.os.VibratorManager
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -89,6 +92,9 @@ class KeyboardIME : InputMethodService(),
                 val uiState by viewModel.uiState.collectAsState()
 
                 KeyboardScreen(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer { clip = false },
                     onTextChange = ::commitText,
                     onCursorChange = ::moveCursor,
                     onTextSelectAndDelete = ::selectAndDelete,
