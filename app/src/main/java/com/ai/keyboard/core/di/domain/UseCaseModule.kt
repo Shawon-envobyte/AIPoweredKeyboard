@@ -2,7 +2,9 @@ package com.ai.keyboard.core.di.domain
 
 import com.ai.keyboard.domain.usecase.CorrectGrammarUseCase
 import com.ai.keyboard.domain.usecase.FixGrammarUseCase
+import com.ai.keyboard.domain.usecase.GetAiWritingAssistanceUseCase
 import com.ai.keyboard.domain.usecase.GetSuggestionsUseCase
+import com.ai.keyboard.domain.usecase.GetTranslateUseCase
 import com.ai.keyboard.domain.usecase.GetWordToneUseCase
 import com.ai.keyboard.domain.usecase.PredictNextWordUseCase
 import com.ai.keyboard.domain.usecase.RephraseContentUseCase
@@ -15,5 +17,7 @@ val useCaseModule = module {
     single { RephraseContentUseCase(get()) }
     factory { FixGrammarUseCase(get()) }
     factory { GetWordToneUseCase(get()) }
+    factory { GetAiWritingAssistanceUseCase(get()) }
+    factory { GetTranslateUseCase(get()) }
 
 }

@@ -3,22 +3,20 @@ package com.ai.keyboard.domain.usecase
 import com.ai.keyboard.core.util.ResultWrapper
 import com.ai.keyboard.domain.repository.AIRepository
 
-class GetWordToneUseCase(
+class GetTranslateUseCase(
     private val repository: AIRepository
 ) {
     suspend operator fun invoke(
         content: String,
-        language: String,
-        action: String
+        language: String
     ): ResultWrapper<String> {
         if (content.isBlank()) {
             return ResultWrapper.Success(content) // Return original text if empty
         }
 
-        return repository.wordTone(
+        return repository.translate(
             content = content,
-            language = language,
-            action = action
+            language = language
         )
     }
 }

@@ -18,4 +18,6 @@ sealed class KeyboardIntent {
     object ToggleNumerRow : KeyboardIntent()
     object FixGrammarPressed : KeyboardIntent()
     object RewritePressed : KeyboardIntent()
+    object AiAssistancePressed : KeyboardIntent()
+    object TranslatePressed : KeyboardIntent()
 }
