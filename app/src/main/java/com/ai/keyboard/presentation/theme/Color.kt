@@ -1,5 +1,6 @@
 package com.ai.keyboard.presentation.theme
 
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 val Purple80 = Color(0xFFD0BCFF)
@@ -46,6 +47,11 @@ val PurpleSpecialKeyBackground = Color(0xFF8E24AA)
 val PurpleSpecialKeyText = Color.White
 val PurpleSuggestionBackground = Color(0xFFAB47BC)
 val PurpleSuggestionText = Color.White
+
+
+val DropdownGradient = Brush.linearGradient(
+    listOf(Color(0xFF695AF7),Color(0xFFCF56C9))
+)
 
 // --- Green Theme ---
 val GreenBackground = Color(0xFF1B5E20)
@@ -100,3 +106,6 @@ val GraySpecialKeyBackground = Color(0xFF616161)
 val GraySpecialKeyText = Color.White
 val GraySuggestionBackground = Color(0xFF9E9E9E)
 val GraySuggestionText = Color.Black
+
+val VeryLightGray = Color(0xFFE6E6E6)
+val Purple = Color(0xFF695AF7)
