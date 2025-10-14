@@ -97,6 +97,9 @@ fun AlphabeticKeyboard(
                 },
                 onRepeat = {
                     onIntent(KeyboardIntent.KeyPressed(KeyAction.Backspace))
+                },
+                onSelectionSwipe = { amount ->
+                    onIntent(KeyboardIntent.KeyPressed(KeyAction.SelectAndDelete(amount)))
                 }
             )
         }
