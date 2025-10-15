@@ -13,7 +13,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
-import com.ai.keyboard.presentation.components.Backspace
 import com.ai.keyboard.presentation.components.BackspaceKey
 import com.ai.keyboard.presentation.components.KeyButton
 import com.ai.keyboard.presentation.components.KeyRow
