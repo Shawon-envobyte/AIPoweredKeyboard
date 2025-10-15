@@ -1,5 +1,6 @@
 package com.ai.keyboard.presentation.screen.keyboard
 
+import com.ai.keyboard.domain.model.ClipboardItem
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardTheme
 
@@ -25,4 +26,12 @@ sealed class KeyboardIntent {
     object RedoPressed : KeyboardIntent()
     object VoiceToTextPressed : KeyboardIntent()
     object PasteFromClipboard : KeyboardIntent()
+
+    // Clipboard intents
+    object ClipboardOpen : KeyboardIntent()
+    object ToggleClipboardEnabled : KeyboardIntent()
+    object ToggleClipboardEditMode : KeyboardIntent()
+    data class ClipboardItemSelected(val item: ClipboardItem) : KeyboardIntent()
+    data class ClipboardItemToggleSelect(val item: ClipboardItem) : KeyboardIntent()
+    object DeleteSelectedClipboardItems : KeyboardIntent()
 }

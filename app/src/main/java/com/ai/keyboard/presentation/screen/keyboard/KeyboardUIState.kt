@@ -1,5 +1,6 @@
 package com.ai.keyboard.presentation.screen.keyboard
 
+import com.ai.keyboard.domain.model.ClipboardState
 import com.ai.keyboard.domain.model.KeyboardState
 import com.ai.keyboard.domain.model.QuickReply
 import com.ai.keyboard.domain.model.Suggestion
@@ -26,6 +27,7 @@ data class KeyboardUIState(
     val selectedWordAction: WordToneType = WordToneType.REWRITE,
     val selectQuickReplyAction: QuickReplyModule = QuickReplyModule.POSITIVE,
     val inputFieldText: String = "",
+    val clipboardState: ClipboardState = ClipboardState(),
     val isVoiceRecording: Boolean = false,
     val voiceRecognitionText: String = "",
     val voiceRecognitionError: String? = null

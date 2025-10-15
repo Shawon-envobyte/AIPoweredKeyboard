@@ -23,6 +23,7 @@ import com.ai.keyboard.presentation.keyboard.EmojiKeyboard
 import com.ai.keyboard.presentation.keyboard.ExtendedSymbolKeyboard
 import com.ai.keyboard.presentation.keyboard.SymbolKeyboard
 import com.ai.keyboard.presentation.screen.ai_assistance.AIWritingAssistanceScreen
+import com.ai.keyboard.presentation.screen.clipboard.ClipboardScreen
 import com.ai.keyboard.presentation.screen.fix_grammar.FixGrammarScreen
 import com.ai.keyboard.presentation.screen.quick_reply.QuickReplyScreen
 import com.ai.keyboard.presentation.screen.translate.TranslateScreen
@@ -83,7 +84,7 @@ fun KeyboardScreen(
                 onChatClick = { viewModel.handleIntent(KeyboardIntent.GetQuickReply) },
                 onClipboardClick = { viewModel.handleIntent(KeyboardIntent.AiAssistancePressed) },
                 onEmojiClick = { viewModel.handleIntent(KeyboardIntent.EmojiPressed) },
-                onDotClick = {},
+                onDotClick = { viewModel.handleIntent(KeyboardIntent.ClipboardOpen) },
                 onMicClick = { 
                     if (uiState.isVoiceRecording) {
                         viewModel.stopVoiceRecognition()
@@ -168,6 +169,32 @@ fun KeyboardScreen(
                         viewModel = viewModel,
                         onBackButtonClick = { viewModel.handleIntent(KeyboardIntent.AlphabetPressed) },
                     )
+                }
+
+                KeyboardMode.CLIP_BOARD -> {
+                    ClipboardScreen(
+                        uiState = uiState,
+                        viewModel = viewModel,
+                        onBackButtonClick = { viewModel.handleIntent(KeyboardIntent.AlphabetPressed) },
+                        clipboardState = uiState.clipboardState,
+                        onEditClick = { viewModel.handleIntent(KeyboardIntent.ToggleClipboardEditMode) },
+                        onItemClick = {
+                            viewModel.handleIntent(
+                                KeyboardIntent.ClipboardItemSelected(
+                                    it
+                                )
+                            )
+                        },
+                        onItemSelect = {
+                            viewModel.handleIntent(
+                                KeyboardIntent.ClipboardItemToggleSelect(
+                                    it
+                                )
+                            )
+                        },
+                        onDeleteSelected = { viewModel.handleIntent(KeyboardIntent.DeleteSelectedClipboardItems) },
+
+                        )
                 }
 
                 else -> {

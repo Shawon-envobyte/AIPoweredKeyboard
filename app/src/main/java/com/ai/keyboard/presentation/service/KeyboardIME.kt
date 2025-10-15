@@ -1,5 +1,7 @@
 package com.ai.keyboard.presentation.service
 
+import android.content.ClipboardManager
+import android.content.Context
 import android.inputmethodservice.InputMethodService
 import android.media.AudioManager
 import android.os.Build
@@ -20,6 +22,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.lifecycle.setViewTreeViewModelStoreOwner
 import androidx.savedstate.SavedStateRegistry
@@ -28,11 +31,13 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardScreen
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardViewModel
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
 object KeyboardBridge {
     var ime: KeyboardIME? = null
 }
+
 class KeyboardIME : InputMethodService(),
     LifecycleOwner,
     ViewModelStoreOwner,
@@ -55,6 +60,12 @@ class KeyboardIME : InputMethodService(),
     private val audioManager: AudioManager by lazy {
         getSystemService(AUDIO_SERVICE) as AudioManager
     }
+
+    //ClipBoard
+    private val clipboardManager: ClipboardManager by lazy {
+        getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    }
+    private var clipboardListener: ClipboardManager.OnPrimaryClipChangedListener? = null
 
     // Lifecycle
     private val lifecycleRegistry = LifecycleRegistry(this)
@@ -81,6 +92,8 @@ class KeyboardIME : InputMethodService(),
             decorView.setViewTreeViewModelStoreOwner(this@KeyboardIME)
             decorView.setViewTreeSavedStateRegistryOwner(this@KeyboardIME)
         }
+        // Setup clipboard monitoring
+        setupClipboardMonitoring()
     }
 
     override fun onCreateInputView(): View {
@@ -256,6 +269,7 @@ class KeyboardIME : InputMethodService(),
         val extracted = ic.getExtractedText(android.view.inputmethod.ExtractedTextRequest(), 0)
         return extracted?.text?.toString()
     }
+
     fun replaceInputFieldText(newText: String) {
         val ic = currentInputConnection ?: return
         try {
@@ -270,4 +284,24 @@ class KeyboardIME : InputMethodService(),
             e.printStackTrace()
         }
     }
+
+    private fun setupClipboardMonitoring() {
+        clipboardListener = ClipboardManager.OnPrimaryClipChangedListener {
+            try {
+                val clipData = clipboardManager.primaryClip
+                if (clipData != null && clipData.itemCount > 0) {
+                    val clipText = clipData.getItemAt(0).text?.toString()
+                    if (!clipText.isNullOrBlank() && clipText.length <= 1000) {
+                        lifecycleScope.launch {
+                            viewModel.addClipboardItem(clipText)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        clipboardManager.addPrimaryClipChangedListener(clipboardListener)
+    }
 }
+
