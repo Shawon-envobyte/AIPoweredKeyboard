@@ -1,6 +1,7 @@
 package com.ai.keyboard.domain.repository
 
 import com.ai.keyboard.core.util.ResultWrapper
+import com.ai.keyboard.domain.model.QuickReply
 import com.ai.keyboard.domain.model.Suggestion
 
 interface AIRepository {
@@ -48,4 +49,10 @@ interface AIRepository {
         content: String,
         language: String
     ): ResultWrapper<String>
+
+    suspend fun quickReply(
+        content: String,
+        language: String,
+    ): ResultWrapper<QuickReply>
+
 }

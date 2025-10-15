@@ -11,5 +11,6 @@ enum class KeyboardMode {
     EMOJI,
     REWRITE,
     AI_ASSISTANCE,
-    TRANSLATE
+    TRANSLATE,
+    QUICK_REPLY
 }

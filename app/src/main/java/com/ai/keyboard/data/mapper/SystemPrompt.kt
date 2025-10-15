@@ -191,3 +191,76 @@ fun translateSystemPrompt(): String {
         6. Output only the final rewritten text without commentary or formatting.
     """.trimIndent()
 }
+
+fun quickReplyPrompt(
+    content: String,
+    language: String
+): String {
+    return """
+    Generate a ${language.uppercase()} QuickReply object for the following message:
+    "$content"
+
+    The QuickReply data model has three fields:
+    - positive: List<String>
+    - neutral: List<String>
+    - negative: List<String>
+
+    Requirements:
+    - Generate 3 natural human-like replies for each tone category.
+    - Replies should sound like real chat or text messages — casual, expressive, and context-aware.
+    - You may include emojis or natural expressions if appropriate.
+    - Keep replies short (1–2 sentences max).
+    - Maintain the message’s original intent and tone.
+    - Avoid robotic or overly formal phrasing.
+
+    Output format:
+    Positive:
+    - reply1
+    - reply2
+    - reply3
+
+    Neutral:
+    - reply1
+    - reply2
+    - reply3
+
+    Negative:
+    - reply1
+    - reply2
+    - reply3
+""".trimIndent()
+}
+
+fun quickReplySystemPrompt(): String {
+    return """
+    You are a conversational AI specialized in generating realistic QuickReply suggestions.
+
+    Your task is to produce responses compatible with the QuickReply data model:
+    - positive: List<String>
+    - neutral: List<String>
+    - negative: List<String>
+
+    Guidelines:
+    1. Generate 3 short, natural-sounding replies for each category: Positive, Neutral, and Negative.
+    2. Replies should reflect realistic chat behavior — friendly, expressive, and human-like.
+    3. You may use emojis or casual phrasing to match tone and emotion.
+    4. Avoid formal, robotic, or repetitive language.
+    5. Ensure context preservation and emotional variation.
+    6. Format the output exactly as:
+        Positive:
+        - reply1
+        - reply2
+        - reply3
+
+        Neutral:
+        - reply1
+        - reply2
+        - reply3
+
+        Negative:
+        - reply1
+        - reply2
+        - reply3
+""".trimIndent()
+}
+

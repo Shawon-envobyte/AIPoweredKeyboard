@@ -1,5 +1,6 @@
 package com.ai.keyboard.data.repository
 
+import android.util.Log
 import com.ai.keyboard.core.util.ResultWrapper
 import com.ai.keyboard.data.mapper.aiWritingAssistancePrompt
 import com.ai.keyboard.data.mapper.aiWritingAssistanceSystemPrompt
@@ -7,6 +8,8 @@ import com.ai.keyboard.data.mapper.contentRephrasePrompt
 import com.ai.keyboard.data.mapper.contentRephraseSystemPrompt
 import com.ai.keyboard.data.mapper.fixGrammarPrompt
 import com.ai.keyboard.data.mapper.fixGrammarSystemPrompt
+import com.ai.keyboard.data.mapper.quickReplyPrompt
+import com.ai.keyboard.data.mapper.quickReplySystemPrompt
 import com.ai.keyboard.data.mapper.toAPIRequest
 import com.ai.keyboard.data.mapper.translatePrompt
 import com.ai.keyboard.data.mapper.translateSystemPrompt
@@ -15,6 +18,7 @@ import com.ai.keyboard.data.mapper.wordToneSystemPrompt
 import com.ai.keyboard.data.source.local.CacheManager
 import com.ai.keyboard.data.source.local.LocalAIEngine
 import com.ai.keyboard.data.source.remote.api.APIDataSource
+import com.ai.keyboard.domain.model.QuickReply
 import com.ai.keyboard.domain.model.Suggestion
 import com.ai.keyboard.domain.repository.AIRepository
 
@@ -115,6 +119,47 @@ class AIRepositoryImpl(
         }
     }
 
+    override suspend fun quickReply(
+        content: String,
+        language: String
+    ): ResultWrapper<QuickReply> {
+        Log.d("QuickReplyModule", "Hit")
+        return try {
+            val response = remoteSource.getResponseFromAPI(
+                request = quickReplyPrompt(content, language)
+                    .toAPIRequest(quickReplySystemPrompt())
+            )
+
+            Log.d("QuickReplyModule", "$response")
+
+            val text = response.candidates.firstOrNull()?.content?.parts?.firstOrNull()?.text ?: ""
+
+            // Parse the text into lists
+            val positive = text.extractBulletList("Positive")
+            val neutral = text.extractBulletList("Neutral")
+            val negative = text.extractBulletList("Negative")
+
+            ResultWrapper.Success(
+                QuickReply(
+                    positive = positive,
+                    neutral = neutral,
+                    negative = negative
+                )
+            )
+        } catch (e: Exception) {
+            ResultWrapper.Failure(e.message ?: "Unknown error")
+        }
+    }
+
+    private fun String.extractBulletList(section: String): List<String> {
+        val regex = Regex("$section:\\s*((?:- .+\\n?)+)", RegexOption.IGNORE_CASE)
+        val match = regex.find(this)?.groups?.get(1)?.value ?: return emptyList()
+        return match.lines()
+            .map { it.removePrefix("-").trim() }
+            .filter { it.isNotEmpty() }
+    }
+
+
     override suspend fun wordTone(
         content: String,
         language: String,
@@ -154,7 +199,7 @@ class AIRepositoryImpl(
         }
     }
 
-        override suspend fun translate(
+    override suspend fun translate(
         content: String,
         language: String
     ): ResultWrapper<String> {
@@ -171,3 +216,5 @@ class AIRepositoryImpl(
         }
     }
 }
+
+
