@@ -92,11 +92,11 @@ fun QuickReplyItem(
     Box(
         modifier = Modifier
             .padding(horizontal = 16.dp, vertical = 4.dp)
+            .clickable { onClick(message) }
             .background(
                 color = MaterialTheme.colorScheme.surfaceBright,
                 shape = RoundedCornerShape(6.dp)
             )
-            .clickable { onClick(message) } // handle click
             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
         Text(
