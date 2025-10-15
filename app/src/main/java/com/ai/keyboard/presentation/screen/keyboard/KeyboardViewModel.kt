@@ -79,6 +79,10 @@ class KeyboardViewModel(
     private var onKeyPressListener: (() -> Unit)? = null
     private var onImeActionListener: ((Int) -> Unit)? = null
 
+    private data class TextHistory(val text: String, val cursorPosition: Int)
+    private val undoStack = mutableListOf<TextHistory>()
+    private val redoStack = mutableListOf<TextHistory>()
+
     init {
         observeSettings()
         setupSuggestionDebouncing()
@@ -86,6 +90,8 @@ class KeyboardViewModel(
     }
 
     fun initializeText(text: String, cursorPosition: Int) {
+        undoStack.clear()
+        redoStack.clear()
         updateKeyboardState {
             copy(
                 currentText = text,
@@ -95,6 +101,8 @@ class KeyboardViewModel(
     }
 
     fun resetText() {
+        undoStack.clear()
+        redoStack.clear()
         updateKeyboardState {
             copy(
                 currentText = "",
@@ -193,6 +201,8 @@ class KeyboardViewModel(
             is KeyboardIntent.RewritePressed -> toggleRewrite()
             is KeyboardIntent.AiAssistancePressed -> toggleAiAssistance()
             is KeyboardIntent.TranslatePressed -> toggleTranslate()
+            is KeyboardIntent.UndoPressed -> handleUndo()
+            is KeyboardIntent.RedoPressed -> handleRedo()
 
             // Clipboard intents
             is KeyboardIntent.ClipboardOpen -> toggleClipboardOpen()
@@ -206,8 +216,18 @@ class KeyboardViewModel(
         }
     }
 
+    private fun addStateToUndoStack(state: TextHistory) {
+        if (undoStack.lastOrNull()?.text == state.text) return
+        undoStack.add(state)
+        redoStack.clear()
+        if (undoStack.size > 20) { // Limit undo history
+            undoStack.removeAt(0)
+        }
+    }
+
     private fun handleKeyPress(action: KeyAction) {
         val currentState = _uiState.value.keyboardState
+        val originalState = TextHistory(currentState.currentText, currentState.cursorPosition)
         var currentText = currentState.currentText
         var cursorPosition = currentState.cursorPosition
         var textChanged = true
@@ -219,7 +239,7 @@ class KeyboardViewModel(
                     KeyboardMode.UPPERCASE, KeyboardMode.CAPS_LOCK -> action.char.uppercase()
                     else -> action.char
                 }
-
+                if (currentText.isEmpty()) addStateToUndoStack(originalState)
                 currentText = StringBuilder(currentText).apply {
                     insert(cursorPosition, char)
                 }.toString()
@@ -229,6 +249,10 @@ class KeyboardViewModel(
 
             is KeyAction.Backspace -> {
                 if (cursorPosition > 0 && currentText.isNotEmpty()) {
+                    val deletedChar = currentText[cursorPosition - 1]
+                    if (deletedChar.isWhitespace() || !deletedChar.isLetterOrDigit()) {
+                        addStateToUndoStack(originalState)
+                    }
                     currentText = StringBuilder(currentText).apply {
                         deleteCharAt(cursorPosition - 1)
                     }.toString()
@@ -242,17 +266,19 @@ class KeyboardViewModel(
             }
 
             is KeyAction.Enter -> {
-                characterToCommit = "\n"
+                addStateToUndoStack(originalState)
+                characterToCommit = ""
                 currentText = StringBuilder(currentText).insert(cursorPosition, characterToCommit).toString()
-                cursorPosition += characterToCommit.length
             }
 
             is KeyAction.ImeAction -> {
+                addStateToUndoStack(originalState)
                 onImeActionListener?.invoke(action.action)
                 textChanged = false
             }
 
             is KeyAction.Space -> {
+                addStateToUndoStack(originalState)
                 currentText = StringBuilder(currentText).apply {
                     insert(cursorPosition, " ")
                 }.toString()
@@ -303,6 +329,44 @@ class KeyboardViewModel(
         }
     }
 
+    private fun handleUndo() {
+        if (undoStack.isNotEmpty()) {
+            val currentState = _uiState.value.keyboardState
+            if (redoStack.lastOrNull()?.text != currentState.currentText) {
+                redoStack.add(TextHistory(currentState.currentText, currentState.cursorPosition))
+            }
+
+            val previousState = undoStack.removeAt(undoStack.lastIndex)
+            replaceCurrentInputWith(previousState.text)
+            updateKeyboardState {
+                copy(
+                    currentText = previousState.text,
+                    cursorPosition = previousState.cursorPosition
+                )
+            }
+            onCursorChangeListener?.invoke(previousState.cursorPosition)
+        }
+    }
+
+    private fun handleRedo() {
+        if (redoStack.isNotEmpty()) {
+            val currentState = _uiState.value.keyboardState
+            if (undoStack.lastOrNull()?.text != currentState.currentText) {
+                undoStack.add(TextHistory(currentState.currentText, currentState.cursorPosition))
+            }
+
+            val nextState = redoStack.removeAt(redoStack.lastIndex)
+            replaceCurrentInputWith(nextState.text)
+            updateKeyboardState {
+                copy(
+                    currentText = nextState.text,
+                    cursorPosition = nextState.cursorPosition
+                )
+            }
+            onCursorChangeListener?.invoke(nextState.cursorPosition)
+        }
+    }
+
     private fun updateCursorPosition(position: Int) {
         val currentText = _uiState.value.keyboardState.currentText
         val validPosition = position.coerceIn(0, currentText.length)
@@ -311,6 +375,9 @@ class KeyboardViewModel(
 
     private fun insertSuggestion(suggestion: String) {
         val currentState = _uiState.value.keyboardState
+        val originalState = TextHistory(currentState.currentText, currentState.cursorPosition)
+        addStateToUndoStack(originalState)
+
         val currentText = currentState.currentText
 
         println("current: $currentText")
@@ -328,14 +395,7 @@ class KeyboardViewModel(
         val finalText = "$textWithoutLastWord$suggestion "
         println("finalText: $finalText")
 
-        val charsToDelete = trimmedText.length - (lastSpaceIndex + 1).coerceAtLeast(0)
-        if (charsToDelete > 0) {
-            onTextSelectAndDeleteListener?.invoke(charsToDelete)
-        }
-
-        onTextChangeListener?.invoke("$suggestion ", textWithoutLastWord.length + suggestion.length + 1)
-        onKeyPressListener?.invoke()
-        textChangeChannel.trySend(finalText)
+        replaceCurrentInputWith(finalText)
 
         updateKeyboardState {
             copy(

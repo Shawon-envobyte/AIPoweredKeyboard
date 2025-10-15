@@ -22,6 +22,8 @@ sealed class KeyboardIntent {
     object RewritePressed : KeyboardIntent()
     object AiAssistancePressed : KeyboardIntent()
     object TranslatePressed : KeyboardIntent()
+    object UndoPressed : KeyboardIntent()
+    object RedoPressed : KeyboardIntent()
     object VoiceToTextPressed : KeyboardIntent()
     object PasteFromClipboard : KeyboardIntent()
 
