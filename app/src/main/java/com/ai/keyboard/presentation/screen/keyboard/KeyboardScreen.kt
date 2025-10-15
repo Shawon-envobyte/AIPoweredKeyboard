@@ -81,6 +81,7 @@ fun KeyboardScreen(
                 onDotClick = {},
                 onMicClick = {}
             )
+            Spacer(modifier = Modifier.height(4.dp))
             // Suggestion Bar - only recompose when suggestions change
             SuggestionBar(
                 suggestions = suggestions,
@@ -91,6 +92,7 @@ fun KeyboardScreen(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .height(40.dp)
                     .padding(horizontal = 4.dp, vertical = 2.dp)
             )
 
