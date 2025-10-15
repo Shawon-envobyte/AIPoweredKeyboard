@@ -224,13 +224,13 @@ class KeyboardIME : InputMethodService(),
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 vibrator.vibrate(
                     VibrationEffect.createOneShot(
-                        10,
+                        1,
                         VibrationEffect.DEFAULT_AMPLITUDE
                     )
                 )
             } else {
                 @Suppress("DEPRECATION")
-                vibrator.vibrate(10)
+                vibrator.vibrate(1)
             }
         } catch (e: Exception) {
             e.printStackTrace()

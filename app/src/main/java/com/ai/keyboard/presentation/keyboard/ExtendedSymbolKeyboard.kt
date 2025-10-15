@@ -9,7 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
-import com.ai.keyboard.presentation.components.Key
 import com.ai.keyboard.presentation.components.KeyButton
 import com.ai.keyboard.presentation.components.KeyRow
 import com.ai.keyboard.presentation.components.SpecialKeyButton
@@ -40,8 +39,7 @@ fun ExtendedSymbolKeyboard(
 
         // Third row
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             SpecialKeyButton(
                 icon = "123",

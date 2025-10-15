@@ -7,7 +7,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
 val localModule = module {
-    single { LocalAIEngine() }
+    single { LocalAIEngine(get()) }
     single { CacheManager() }
     single { PreferencesDataStore(androidContext()) }
 }

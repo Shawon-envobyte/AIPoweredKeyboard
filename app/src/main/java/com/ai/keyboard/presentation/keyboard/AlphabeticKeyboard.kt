@@ -3,20 +3,20 @@ package com.ai.keyboard.presentation.keyboard
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
-import com.ai.keyboard.presentation.components.Backspace
-import com.ai.keyboard.presentation.components.Key
+import com.ai.keyboard.presentation.components.BackspaceKey
 import com.ai.keyboard.presentation.components.KeyButton
 import com.ai.keyboard.presentation.components.KeyRow
-import com.ai.keyboard.presentation.components.Space
+import com.ai.keyboard.presentation.components.SpaceKey
 import com.ai.keyboard.presentation.components.SpecialKeyButton
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardIntent
 
@@ -28,7 +28,9 @@ fun AlphabeticKeyboard(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().graphicsLayer { clip = false } ,
+        modifier = modifier
+            .fillMaxWidth()
+            .graphicsLayer { clip = false },
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         // Optional Number Row
@@ -51,8 +53,7 @@ fun AlphabeticKeyboard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                .padding(horizontal = 16.dp)
         ) {
             listOf("a", "s", "d", "f", "g", "h", "j", "k", "l").forEach { char ->
                 KeyButton(
@@ -66,8 +67,7 @@ fun AlphabeticKeyboard(
 
         // Third row: Shift Z X C V B N M Backspace
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             // Shift key
             SpecialKeyButton(
@@ -81,6 +81,8 @@ fun AlphabeticKeyboard(
                 modifier = Modifier.weight(1.5f)
             )
 
+            Spacer(modifier = Modifier.width(3.dp))
+
             listOf("z", "x", "c", "v", "b", "n", "m").forEach { char ->
                 KeyButton(
                     text = char,
@@ -90,8 +92,10 @@ fun AlphabeticKeyboard(
                 )
             }
 
+            Spacer(modifier = Modifier.width(3.dp))
+
             // Backspace key
-            Backspace(
+            BackspaceKey(
                 modifier = Modifier.weight(1.5f),
                 text = "⌫",
                 onClick = {
@@ -108,14 +112,15 @@ fun AlphabeticKeyboard(
 
         // Fourth row: 123 , Space . Enter
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             SpecialKeyButton(
                 icon = "123",
                 onClick = { onIntent(KeyboardIntent.SymbolPressed) },
                 modifier = Modifier.weight(1.5f)
             )
+
+            Spacer(modifier = Modifier.width(3.dp))
 
             KeyButton(
                 text = ",",
@@ -124,7 +129,10 @@ fun AlphabeticKeyboard(
                 modifier = Modifier.weight(1f)
             )
 
-            Space(
+            Spacer(modifier = Modifier.width(3.dp))
+
+
+            SpaceKey(
                 modifier = Modifier.weight(4f),
                 text = "Space",
                 onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Space)) },
@@ -133,12 +141,16 @@ fun AlphabeticKeyboard(
                 }
             )
 
+            Spacer(modifier = Modifier.width(3.dp))
+
             KeyButton(
                 text = ".",
                 onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character("."))) },
                 mode = mode,
                 modifier = Modifier.weight(1f)
             )
+
+            Spacer(modifier = Modifier.width(3.dp))
 
             SpecialKeyButton(
                 icon = "⏎",
