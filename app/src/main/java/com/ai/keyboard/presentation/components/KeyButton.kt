@@ -1,11 +1,7 @@
 package com.ai.keyboard.presentation.components
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -19,6 +15,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -26,12 +24,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -39,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import com.ai.keyboard.domain.model.KeyboardMode
 import com.ai.keyboard.presentation.theme.AIKeyboardTheme
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -62,11 +60,13 @@ fun KeyButton(
     }
 
     var showTooltip by remember { mutableStateOf(false) }
+    var tooltipCounter by remember { mutableIntStateOf(0) }
     var showPopup by remember { mutableStateOf(false) }
+    var popupCounter by remember { mutableIntStateOf(0) }
     var isPressed by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     var keySize by remember { mutableStateOf(IntSize.Zero) }
     var keyOffset by remember { mutableStateOf(IntOffset.Zero) }
-    val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
 
     // Cache long press availability
@@ -75,21 +75,14 @@ fun KeyButton(
     // Instant visual feedback animation
     val elevation by animateDpAsState(
         targetValue = if (isPressed) 0.dp else 2.dp,
+        animationSpec = tween(durationMillis = 50),
         label = "keyElevation"
     )
 
-    val keyBackground by animateColorAsState(
+    val background by animateColorAsState(
         targetValue = if (isPressed) AIKeyboardTheme.colors.background else AIKeyboardTheme.colors.keyBackground,
+        animationSpec = tween(durationMillis = 50),
         label = "keyBackground"
-    )
-
-    val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessHigh
-        ),
-        label = "keyScale"
     )
 
     Box(
@@ -98,16 +91,12 @@ fun KeyButton(
     ) {
         // --- Main key surface ---
         Surface(
-            color = keyBackground,
+            color = background,
             shape = RoundedCornerShape(6.dp),
             shadowElevation = elevation,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(1.dp)
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                }
+                .padding(horizontal = 3.dp, vertical = 1.dp)
                 .onGloballyPositioned { coords ->
                     keyOffset = IntOffset(
                         coords.localToWindow(Offset.Zero).x.toInt(),
@@ -116,26 +105,33 @@ fun KeyButton(
                     keySize = coords.size
                 }
                 .pointerInput(text, hasLongPressOptions) {
+                    var tooltipJob: Job? = null
                     detectTapGestures(
                         onPress = {
+                            tooltipJob?.cancel()
+
+                            // Show tooltip instantly on press
                             isPressed = true
-                            val released = try {
+                            tooltipCounter++
+                            showTooltip = true
+
+                            try {
                                 tryAwaitRelease()
                             } finally {
-                                isPressed = false
+                                // Schedule the tooltip to be hidden after a short delay
+                                tooltipJob = coroutineScope.launch {
+                                    delay(50)
+                                    isPressed = false
+                                    showTooltip = false
+                                }
                             }
                         },
                         onTap = {
-                            showTooltip = true
                             onClick()
-                            // Reduced delay for snappier feel
-                            coroutineScope.launch {
-                                delay(250)
-                            }
-                            showTooltip = false
                         },
                         onLongPress = {
                             if (hasLongPressOptions) {
+                                popupCounter++
                                 showPopup = true
                                 showTooltip = false
                             }
@@ -147,14 +143,14 @@ fun KeyButton(
                 Text(
                     text = displayChar,
                     color = AIKeyboardTheme.colors.keyText,
-                    fontSize = 18.sp
+                    fontSize = 22.sp
                 )
             }
         }
 
         // --- Tooltip Popup ---
         if (showTooltip && keySize != IntSize.Zero) {
-            val popupWidthDp = with(density) { keySize.width.toDp() * 1.25f }
+            val popupWidthDp = with(density) { keySize.width.toDp() * 1.5f }
             val popupHeightDp = with(density) { keySize.height.toDp() * 1.25f }
             val popupYOffsetPx = with(density) { -(keySize.height.toDp() + 10.dp).roundToPx() }
 
@@ -162,10 +158,13 @@ fun KeyButton(
                 alignment = Alignment.TopCenter,
                 offset = IntOffset(0, popupYOffsetPx),
             ) {
-                KeyPopupBox(
-                    modifier = Modifier.size(popupWidthDp, popupHeightDp),
-                    text = displayChar
-                )
+                // Use counter to force recomposition on every show
+                key(tooltipCounter) {
+                    KeyPopupBox(
+                        modifier = Modifier.size(popupWidthDp, popupHeightDp),
+                        text = displayChar
+                    )
+                }
             }
         }
 
@@ -176,14 +175,17 @@ fun KeyButton(
                 offset = IntOffset(keyOffset.x, keyOffset.y - keySize.height * 2),
                 onDismissRequest = { showPopup = false }
             ) {
-                LongPressPopover(
-                    options = longPressMap[text] ?: emptyList(),
-                    onSelect = { char ->
-                        onLongPress?.invoke(char)
-                        showPopup = false
-                    },
-                    keySize = keySize
-                )
+                // Use counter to force recomposition
+                key(popupCounter) {
+                    LongPressPopover(
+                        options = longPressMap[text] ?: emptyList(),
+                        onSelect = { char ->
+                            onLongPress?.invoke(char)
+                            showPopup = false
+                        },
+                        keySize = keySize
+                    )
+                }
             }
         }
     }
@@ -194,34 +196,19 @@ fun KeyPopupBox(
     modifier: Modifier,
     text: String
 ) {
-    // Instant popup animation
-    val scale by animateFloatAsState(
-        targetValue = 1f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness = Spring.StiffnessHigh
-        ),
-        label = "tooltipScale"
-    )
-
     Box(
         modifier = modifier
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-                transformOrigin = TransformOrigin(0.5f, 1f)
-            }
             .background(
                 AIKeyboardTheme.colors.keyText,
                 RoundedCornerShape(8.dp)
-            )
-            .padding(8.dp),
+            ),
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = text.uppercase(),
+            text = text,
+            textAlign = TextAlign.Center,
             color = AIKeyboardTheme.colors.keyBackground,
-            fontSize = 28.sp,
+            fontSize = 34.sp,
             fontWeight = FontWeight.Bold
         )
     }

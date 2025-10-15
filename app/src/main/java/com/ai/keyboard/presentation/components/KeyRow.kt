@@ -18,8 +18,7 @@ fun KeyRow(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        modifier = modifier.fillMaxWidth()
     ) {
         keys.forEach { char ->
             KeyButton(
