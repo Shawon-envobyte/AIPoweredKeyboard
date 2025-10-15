@@ -1,6 +1,5 @@
 package com.ai.keyboard.core.di.data
 
-import com.ai.keyboard.core.clipboard.AndroidClipboardManager
 import com.ai.keyboard.data.source.local.CacheManager
 import com.ai.keyboard.data.source.local.LocalAIEngine
 import com.ai.keyboard.data.source.local.datastore.PreferencesDataStore
@@ -11,5 +10,4 @@ val localModule = module {
     single { LocalAIEngine(get()) }
     single { CacheManager() }
     single { PreferencesDataStore(androidContext()) }
-    single { AndroidClipboardManager(androidContext()) }
 }

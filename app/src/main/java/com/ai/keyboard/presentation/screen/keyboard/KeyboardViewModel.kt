@@ -1,6 +1,5 @@
 package com.ai.keyboard.presentation.screen.keyboard
 
-import android.util.Log
 import android.Manifest
 import android.content.Context
 import android.content.Intent
@@ -12,7 +11,6 @@ import android.speech.SpeechRecognizer
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ai.keyboard.core.service.ServiceDataPass
 import com.ai.keyboard.core.util.ResultWrapper
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
@@ -24,13 +22,10 @@ import com.ai.keyboard.domain.usecase.GetAiWritingAssistanceUseCase
 import com.ai.keyboard.domain.usecase.GetSuggestionsUseCase
 import com.ai.keyboard.domain.usecase.GetTranslateUseCase
 import com.ai.keyboard.domain.usecase.GetWordToneUseCase
-import com.ai.keyboard.domain.usecase.QuickReplyUseCase
 import com.ai.keyboard.domain.usecase.RephraseContentUseCase
-import com.ai.keyboard.domain.usecase.GetClipboardTextUseCase
 import com.ai.keyboard.presentation.model.AIWritingAssistanceType
 import com.ai.keyboard.presentation.model.ActionButtonType
 import com.ai.keyboard.presentation.model.LanguageType
-import com.ai.keyboard.presentation.model.QuickReplyModule
 import com.ai.keyboard.presentation.model.WordToneType
 import com.ai.keyboard.presentation.service.KeyboardBridge
 import kotlinx.coroutines.Dispatchers
@@ -50,11 +45,9 @@ class KeyboardViewModel(
     private val rephraseContentUseCase: RephraseContentUseCase,
     private val settingsRepository: SettingsRepository,
     private val fixGrammarUseCase: FixGrammarUseCase,
-    private val quickReplyUseCase: QuickReplyUseCase,
     private val getWordToneUseCase: GetWordToneUseCase,
     private val getAiWritingAssistanceUseCase: GetAiWritingAssistanceUseCase,
     private val getTranslateUseCase: GetTranslateUseCase,
-    private val getClipboardTextUseCase: GetClipboardTextUseCase,
     private val context: Context
 ) : ViewModel() {
 
@@ -171,7 +164,6 @@ class KeyboardViewModel(
             is KeyboardIntent.ToggleNumerRow -> toggleNumerRow()
             is KeyboardIntent.EmojiPressed -> toggleEmoji()
             is KeyboardIntent.FixGrammarPressed -> toggleFixGrammar()
-            is KeyboardIntent.GetQuickReply -> toggleQuickReply()
             is KeyboardIntent.RewritePressed -> toggleRewrite()
             is KeyboardIntent.AiAssistancePressed -> toggleAiAssistance()
             is KeyboardIntent.TranslatePressed -> toggleTranslate()
@@ -216,10 +208,10 @@ class KeyboardViewModel(
 
             is KeyAction.Enter -> {
                 currentText = StringBuilder(currentText).apply {
-                    insert(cursorPosition, "")
+                    insert(cursorPosition, "\n")
                 }.toString()
                 cursorPosition += 1
-                characterToCommit = ""
+                characterToCommit = "\n"
             }
 
             is KeyAction.Space -> {
@@ -249,19 +241,6 @@ class KeyboardViewModel(
 
             is KeyAction.InsertSuggestion -> {
 
-            }
-
-            KeyAction.Paste -> {
-                val pastedText = getClipboardTextUseCase()
-                if (pastedText.isNotEmpty()) {
-                    currentText = StringBuilder(currentText).apply {
-                        insert(cursorPosition, pastedText)
-                    }.toString()
-                    cursorPosition += pastedText.length
-                    characterToCommit = pastedText
-                } else {
-                    textChanged = false
-                }
             }
 
         }
@@ -299,40 +278,32 @@ class KeyboardViewModel(
     private fun insertSuggestion(suggestion: String) {
         val currentState = _uiState.value.keyboardState
         val currentText = currentState.currentText
+        val cursorPos = currentState.cursorPosition
 
-        println("current: $currentText")
-
-        // Trim trailing spaces
-        val trimmedText = currentText.trimEnd()
-
-        // Find last space (to isolate last word)
-        val lastSpaceIndex = trimmedText.lastIndexOf(' ')
-
-        // Text before the last word
-        val textWithoutLastWord = if (lastSpaceIndex != -1) {
-            trimmedText.substring(0, lastSpaceIndex + 1)
-        } else {
-            ""
+        // Find the start of the current word
+        var wordStart = cursorPos
+        while (wordStart > 0 && currentText[wordStart - 1].isLetterOrDigit()) {
+            wordStart--
         }
 
-        val finalText = "$textWithoutLastWord$suggestion "
-        println("finalText: $finalText")
+        // Replace current word with suggestion
+        val newText = StringBuilder(currentText).apply {
+            delete(wordStart, cursorPos)
+            insert(wordStart, "$suggestion ")
+        }.toString()
 
-        val charsToDelete = trimmedText.length - (lastSpaceIndex + 1).coerceAtLeast(0)
-        if (charsToDelete > 0) {
-            onTextSelectAndDeleteListener?.invoke(charsToDelete)
-        }
-
-        onTextChangeListener?.invoke("$suggestion ", textWithoutLastWord.length + suggestion.length + 1)
-        onKeyPressListener?.invoke()
-        textChangeChannel.trySend(finalText)
+        val newCursorPos = wordStart + suggestion.length + 1
 
         updateKeyboardState {
             copy(
-                currentText = finalText,
-                cursorPosition = finalText.length
+                currentText = newText,
+                cursorPosition = newCursorPos
             )
         }
+
+        onTextChangeListener?.invoke(newText, newCursorPos)
+        onKeyPressListener?.invoke()
+        textChangeChannel.trySend(newText)
     }
 
     private fun toggleShift() {
@@ -389,29 +360,21 @@ class KeyboardViewModel(
         updateMode(KeyboardMode.LOWERCASE)
     }
 
+
     private fun toggleFixGrammar() {
         updateMode(KeyboardMode.FIX_GRAMMAR)
     }
-
     private fun toggleRewrite() {
         updateMode(KeyboardMode.REWRITE)
     }
-
     private fun toggleAiAssistance() {
         updateMode(KeyboardMode.AI_ASSISTANCE)
     }
-
     private fun toggleTranslate() {
         updateMode(KeyboardMode.TRANSLATE)
     }
-
     private fun updateMode(mode: KeyboardMode) {
         updateKeyboardState { copy(mode = mode) }
-    }
-
-    private fun toggleQuickReply() {
-        updateMode(KeyboardMode.QUICK_REPLY)
-        onSelectQuickReplyActionChange(QuickReplyModule.POSITIVE)
     }
 
     private fun fetchSuggestions(text: String) {
@@ -573,7 +536,6 @@ class KeyboardViewModel(
             }
         }
     }
-
     fun getTranslate() {
         val currentState = _uiState.value
         var currentText = currentState.inputFieldText
@@ -605,7 +567,6 @@ class KeyboardViewModel(
             }
         }
     }
-
     fun onLanguageSelected(language: LanguageType) {
         _uiState.value = _uiState.value.copy(
             language = language
@@ -617,47 +578,16 @@ class KeyboardViewModel(
             selectedAction = action
         )
     }
-
-    fun onSelectQuickReplyActionChange(action: QuickReplyModule) {
-        _uiState.value = _uiState.value.copy(
-            selectQuickReplyAction = action
-        )
-        viewModelScope.launch {
-            when (val result =
-                quickReplyUseCase(ServiceDataPass.lastMessage, uiState.value.language.name)) {
-                is ResultWrapper.Success -> {
-                    _uiState.value = _uiState.value.copy(
-                        quickReplyList = result.data
-                    )
-                }
-                is ResultWrapper.Failure -> {
-                    Log.e("QuickReplyModule", "QuickReply failed: ${result.message}")
-                }
-                else -> {
-                    Log.e("QuickReplyModule", "Unexpected Error")
-                }
-            }
-        }
-    }
-
-    fun changeQuickReplyMessageType(action: QuickReplyModule) {
-        _uiState.value = _uiState.value.copy(
-            selectQuickReplyAction = action
-        )
-    }
-
     fun onSelectedAiActionChange(action: AIWritingAssistanceType) {
         _uiState.value = _uiState.value.copy(
             selectedAiAction = action
         )
     }
-
     fun onSelectedWordActionChange(action: WordToneType) {
         _uiState.value = _uiState.value.copy(
             selectedWordAction = action
         )
     }
-
     fun replaceCurrentInputWith(newText: String) {
         KeyboardBridge.ime?.replaceInputFieldText(newText)
     }
@@ -673,15 +603,15 @@ class KeyboardViewModel(
 
     private fun startVoiceRecognition() {
         // Check for audio permission first
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) 
             != PackageManager.PERMISSION_GRANTED) {
-
+            
             // Send broadcast to request permission
             val intent = Intent("com.ai.keyboard.REQUEST_AUDIO_PERMISSION")
             context.sendBroadcast(intent)
-
+            
             _uiState.update { it.copy(
-                needsAudioPermission = true,
+                needsAudioPermission = true, 
                 error = "Requesting microphone permission..."
             ) }
             return
@@ -735,34 +665,34 @@ class KeyboardViewModel(
                 override fun onResults(results: Bundle?) {
                     val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     val recognizedText = matches?.firstOrNull() ?: ""
-
+                    
                     if (recognizedText.isNotEmpty()) {
                         // Insert the recognized text at cursor position
                         val currentState = _uiState.value.keyboardState
                         val currentText = currentState.currentText
                         val cursorPos = currentState.cursorPosition
-
+                        
                         val newText = StringBuilder(currentText).apply {
                             insert(cursorPos, recognizedText)
                         }.toString()
-
+                        
                         val newCursorPos = cursorPos + recognizedText.length
-
+                        
                         updateKeyboardState {
                             copy(
                                 currentText = newText,
                                 cursorPosition = newCursorPos
                             )
                         }
-
-                        _uiState.update {
+                        
+                        _uiState.update { 
                             it.copy(
-                                isListening = false,
+                                isListening = false, 
                                 voiceToTextResult = recognizedText,
                                 error = null
-                            )
+                            ) 
                         }
-
+                        
                         // Notify the input connection
                         onTextChangeListener?.invoke(recognizedText, newCursorPos)
                         onKeyPressListener?.invoke()

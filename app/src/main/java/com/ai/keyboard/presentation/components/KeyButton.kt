@@ -134,9 +134,6 @@ fun KeyButton(
                                 popupCounter++
                                 showPopup = true
                                 showTooltip = false
-                            } else if (onLongPress != null) {
-                                // Direct long press callback for keys without popup options
-                                onLongPress(text)
                             }
                         }
                     )
@@ -232,6 +229,5 @@ val longPressMap: Map<String, List<String>> = mapOf(
     "g" to listOf("ğ"),
     "l" to listOf("ł"),
     "r" to listOf("ř"),
-    "t" to listOf("ť"),
-
+    "t" to listOf("ť")
 )
