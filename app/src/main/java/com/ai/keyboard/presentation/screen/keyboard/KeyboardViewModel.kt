@@ -9,6 +9,8 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import androidx.core.content.ContextCompat
+import android.util.Log
+import android.view.inputmethod.EditorInfo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ai.keyboard.core.util.ResultWrapper
@@ -60,6 +62,7 @@ class KeyboardViewModel(
     private var onCursorChangeListener: ((Int) -> Unit)? = null
     private var onTextSelectAndDeleteListener: ((Int) -> Unit)? = null
     private var onKeyPressListener: (() -> Unit)? = null
+    private var onImeActionListener: ((Int) -> Unit)? = null
 
     private var speechRecognizer: SpeechRecognizer? = null
 
@@ -149,6 +152,14 @@ class KeyboardViewModel(
         onKeyPressListener = listener
     }
 
+    fun setOnImeActionListener(listener: (Int) -> Unit) {
+        onImeActionListener = listener
+    }
+
+    fun setImeAction(imeAction: Int) {
+        updateKeyboardState { copy(imeAction = imeAction) }
+    }
+
     fun handleIntent(intent: KeyboardIntent) {
         when (intent) {
             is KeyboardIntent.KeyPressed -> handleKeyPress(intent.action)
@@ -198,20 +209,22 @@ class KeyboardViewModel(
                         deleteCharAt(cursorPosition - 1)
                     }.toString()
                     cursorPosition--
-                    // For backspace, we'll handle it differently
                     onTextChangeListener?.invoke("BACKSPACE", cursorPosition)
-                    textChanged = false // Don't trigger normal flow
+                    textChanged = false
                 } else {
                     textChanged = false
                 }
             }
 
             is KeyAction.Enter -> {
-                currentText = StringBuilder(currentText).apply {
-                    insert(cursorPosition, "\n")
-                }.toString()
-                cursorPosition += 1
                 characterToCommit = "\n"
+                currentText = StringBuilder(currentText).insert(cursorPosition, characterToCommit).toString()
+                cursorPosition += characterToCommit.length
+            }
+
+            is KeyAction.ImeAction -> {
+                onImeActionListener?.invoke(action.action)
+                textChanged = false
             }
 
             is KeyAction.Space -> {
@@ -253,17 +266,14 @@ class KeyboardViewModel(
         }
 
         if (textChanged && characterToCommit.isNotEmpty()) {
-            // Send only the character to commit, not the full text
             onTextChangeListener?.invoke(characterToCommit, cursorPosition)
             textChangeChannel.trySend(currentText)
-
         } else if (!textChanged && action !is KeyAction.Backspace) {
             onCursorChangeListener?.invoke(cursorPosition)
         }
 
         onKeyPressListener?.invoke()
 
-        // Auto-shift after character
         if (currentState.mode == KeyboardMode.UPPERCASE && action is KeyAction.Character) {
             updateMode(KeyboardMode.LOWERCASE)
         }
@@ -280,10 +290,16 @@ class KeyboardViewModel(
         val currentText = currentState.currentText
         val cursorPos = currentState.cursorPosition
 
-        // Find the start of the current word
-        var wordStart = cursorPos
-        while (wordStart > 0 && currentText[wordStart - 1].isLetterOrDigit()) {
-            wordStart--
+        println("current: $currentText")
+
+        val trimmedText = currentText.trimEnd()
+
+        val lastSpaceIndex = trimmedText.lastIndexOf(' ')
+
+        val textWithoutLastWord = if (lastSpaceIndex != -1) {
+            trimmedText.substring(0, lastSpaceIndex + 1)
+        } else {
+            ""
         }
 
         // Replace current word with suggestion

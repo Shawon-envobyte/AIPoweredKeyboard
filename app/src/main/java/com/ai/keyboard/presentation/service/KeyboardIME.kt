@@ -76,7 +76,6 @@ class KeyboardIME : InputMethodService(),
         savedStateRegistryController.performRestore(null)
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
 
-        // Set owners on the IME window decor view if available
         window?.window?.decorView?.let { decorView ->
             decorView.setViewTreeLifecycleOwner(this@KeyboardIME)
             decorView.setViewTreeViewModelStoreOwner(this@KeyboardIME)
@@ -112,7 +111,7 @@ class KeyboardIME : InputMethodService(),
                 )
             }
         }
-
+        viewModel.setOnImeActionListener(::onImeAction)
         return composeView!!
     }
 
@@ -120,7 +119,9 @@ class KeyboardIME : InputMethodService(),
         super.onStartInputView(info, restarting)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
 
-        // Don't initialize text - let InputConnection manage it
+        val action = info?.imeOptions?.and(EditorInfo.IME_MASK_ACTION) ?: EditorInfo.IME_ACTION_NONE
+        viewModel.setImeAction(action)
+
         viewModel.resetText()
     }
 
@@ -144,9 +145,7 @@ class KeyboardIME : InputMethodService(),
         if (allText != null) {
             viewModel.updateInputFieldText(allText)
         }
-        // Update cursor position in ViewModel
         if (newSelStart != -1 && newSelStart == newSelEnd) {
-            // Get current text from InputConnection
             val ic = currentInputConnection
             if (ic != null) {
                 try {
@@ -178,12 +177,19 @@ class KeyboardIME : InputMethodService(),
 
         try {
             if (text == "BACKSPACE") {
-                // Handle backspace
                 ic.deleteSurroundingText(1, 0)
             } else {
-                // Commit the character directly
                 ic.commitText(text, 1)
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun onImeAction(action: Int) {
+        val ic = currentInputConnection ?: return
+        try {
+            ic.performEditorAction(action)
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -253,21 +259,15 @@ class KeyboardIME : InputMethodService(),
     fun replaceInputFieldText(newText: String) {
         val ic = currentInputConnection ?: return
         try {
-            // Get all existing text
             val currentText = getAllTextFromInputField() ?: ""
             if (currentText.isNotEmpty()) {
-                // Select all text
                 ic.setSelection(0, currentText.length)
-                // Replace with new text
                 ic.commitText(newText, 1)
             } else {
-                // If field is empty, just insert the new text
                 ic.commitText(newText, 1)
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
-
-
 }
