@@ -59,6 +59,9 @@ fun AlphabeticKeyboard(
                 KeyButton(
                     text = char,
                     onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(char))) },
+                    onLongPress = {
+                        onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(it)))
+                    },
                     mode = mode,
                     modifier = Modifier.weight(1f)
                 )

@@ -4,7 +4,6 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -23,7 +22,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -48,7 +48,6 @@ fun KeyButton(
     modifier: Modifier = Modifier,
     displayText: String = text,
     onLongPress: ((String) -> Unit)? = null,
-    longPressDelay: Long = 300L, // Reduced from 500L for faster response
 ) {
     // Memoize display character
     val displayChar = remember(displayText, text, mode) {
@@ -62,11 +61,9 @@ fun KeyButton(
     var showTooltip by remember { mutableStateOf(false) }
     var tooltipCounter by remember { mutableIntStateOf(0) }
     var showPopup by remember { mutableStateOf(false) }
-    var popupCounter by remember { mutableIntStateOf(0) }
     var isPressed by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     var keySize by remember { mutableStateOf(IntSize.Zero) }
-    var keyOffset by remember { mutableStateOf(IntOffset.Zero) }
     val density = LocalDensity.current
 
     // Cache long press availability
@@ -98,45 +95,65 @@ fun KeyButton(
                 .fillMaxSize()
                 .padding(horizontal = 3.dp, vertical = 1.dp)
                 .onGloballyPositioned { coords ->
-                    keyOffset = IntOffset(
-                        coords.localToWindow(Offset.Zero).x.toInt(),
-                        coords.localToWindow(Offset.Zero).y.toInt()
-                    )
                     keySize = coords.size
                 }
                 .pointerInput(text, hasLongPressOptions) {
                     var tooltipJob: Job? = null
-                    detectTapGestures(
-                        onPress = {
-                            tooltipJob?.cancel()
+                    var longPressJob: Job? = null
+                    var isLongPressTriggered = false
 
-                            // Show tooltip instantly on press
-                            isPressed = true
-                            tooltipCounter++
-                            showTooltip = true
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Main)
 
-                            try {
-                                tryAwaitRelease()
-                            } finally {
-                                // Schedule the tooltip to be hidden after a short delay
-                                tooltipJob = coroutineScope.launch {
-                                    delay(50)
-                                    isPressed = false
-                                    showTooltip = false
+                            when (event.type) {
+                                PointerEventType.Press -> {
+                                    tooltipJob?.cancel()
+                                    longPressJob?.cancel()
+                                    isLongPressTriggered = false
+
+                                    isPressed = true
+                                    tooltipCounter++
+                                    showTooltip = true
+
+                                    // Start long press timer
+                                    if (hasLongPressOptions) {
+                                        longPressJob = coroutineScope.launch {
+                                            delay(300)
+                                            isLongPressTriggered = true
+                                            showTooltip = false
+                                            showPopup = true
+                                        }
+                                    }
+                                }
+
+                                PointerEventType.Release -> {
+                                    longPressJob?.cancel()
+
+                                    if (!isLongPressTriggered) {
+                                        // Normal tap
+                                        onClick()
+                                        tooltipJob = coroutineScope.launch {
+                                            delay(50)
+                                            isPressed = false
+                                            showTooltip = false
+                                        }
+                                    } else {
+                                        // Long press was shown, hide everything
+                                        isPressed = false
+                                        showTooltip = false
+                                    }
+                                }
+
+                                PointerEventType.Move -> {
+                                    // If popup is showing, pass events to it
+                                    if (showPopup) {
+                                        event.changes.forEach { it.consume() }
+                                    }
                                 }
                             }
-                        },
-                        onTap = {
-                            onClick()
-                        },
-                        onLongPress = {
-                            if (hasLongPressOptions) {
-                                popupCounter++
-                                showPopup = true
-                                showTooltip = false
-                            }
                         }
-                    )
+                    }
                 }
         ) {
             Box(contentAlignment = Alignment.Center) {
@@ -170,22 +187,25 @@ fun KeyButton(
 
         // --- Long Press Popup ---
         if (showPopup && hasLongPressOptions) {
+            val popupYOffset = with(density) { -(keySize.height.toDp() + 24.dp).roundToPx() }
+
             Popup(
                 alignment = Alignment.TopCenter,
-                offset = IntOffset(keyOffset.x, keyOffset.y - keySize.height * 2),
+                offset = IntOffset(0, popupYOffset),
                 onDismissRequest = { showPopup = false }
             ) {
-                // Use counter to force recomposition
-                key(popupCounter) {
-                    LongPressPopover(
-                        options = longPressMap[text] ?: emptyList(),
-                        onSelect = { char ->
-                            onLongPress?.invoke(char)
-                            showPopup = false
-                        },
-                        keySize = keySize
-                    )
-                }
+                LongPressPopover(
+                    options = longPressMap[text] ?: emptyList(),
+                    onSelect = { char ->
+                        onLongPress?.invoke(char)
+                        showPopup = false
+                        isPressed = false
+                    },
+                    onDismiss = {
+                        showPopup = false
+                        isPressed = false
+                    }
+                )
             }
         }
     }

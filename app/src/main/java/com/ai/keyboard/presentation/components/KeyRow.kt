@@ -1,11 +1,9 @@
 package com.ai.keyboard.presentation.components
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardIntent
@@ -24,6 +22,7 @@ fun KeyRow(
             KeyButton(
                 text = char,
                 onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(char))) },
+                onLongPress = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(it))) },
                 mode = mode,
                 modifier = Modifier.weight(1f)
             )
