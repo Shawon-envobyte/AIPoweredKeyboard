@@ -7,16 +7,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
-import com.ai.keyboard.presentation.components.Backspace
-import com.ai.keyboard.presentation.components.Key
+import com.ai.keyboard.presentation.components.BackspaceKey
 import com.ai.keyboard.presentation.components.KeyButton
 import com.ai.keyboard.presentation.components.KeyRow
-import com.ai.keyboard.presentation.components.Space
+import com.ai.keyboard.presentation.components.SpaceKey
 import com.ai.keyboard.presentation.components.SpecialKeyButton
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardIntent
 
@@ -91,7 +89,7 @@ fun AlphabeticKeyboard(
             }
 
             // Backspace key
-            Backspace(
+            BackspaceKey(
                 modifier = Modifier.weight(1.5f),
                 text = "⌫",
                 onClick = {
@@ -124,7 +122,7 @@ fun AlphabeticKeyboard(
                 modifier = Modifier.weight(1f)
             )
 
-            Space(
+            SpaceKey(
                 modifier = Modifier.weight(4f),
                 text = "Space",
                 onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Space)) },
