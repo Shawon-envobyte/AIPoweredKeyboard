@@ -1,12 +1,18 @@
 package com.ai.keyboard.presentation
 
+import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import com.ai.keyboard.presentation.screen.settings.SettingsScreen
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardIntent
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardViewModel
@@ -45,8 +52,32 @@ import com.ai.keyboard.presentation.theme.AIKeyboardTheme
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
+    
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            // Permission granted, voice recognition can proceed
+        } else {
+            // Permission denied, show message or handle accordingly
+        }
+    }
+    
+    private val permissionRequestReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == "com.ai.keyboard.REQUEST_AUDIO_PERMISSION") {
+                requestAudioPermission()
+            }
+        }
+    }
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Register broadcast receiver for permission requests
+        val filter = IntentFilter("com.ai.keyboard.REQUEST_AUDIO_PERMISSION")
+        registerReceiver(permissionRequestReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        
         enableEdgeToEdge()
         setContent {
             AIKeyboardTheme {
@@ -64,6 +95,26 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 }
+            }
+        }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(permissionRequestReceiver)
+    }
+    
+    private fun requestAudioPermission() {
+        when {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                // Permission already granted
+            }
+            else -> {
+                // Request permission
+                requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
         }
     }

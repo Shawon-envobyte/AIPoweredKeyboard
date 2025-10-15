@@ -80,7 +80,13 @@ fun KeyboardScreen(
                 onClipboardClick = { viewModel.handleIntent(KeyboardIntent.AiAssistancePressed) },
                 onEmojiClick = { viewModel.handleIntent(KeyboardIntent.EmojiPressed) },
                 onDotClick = {},
-                onMicClick = {}
+                onMicClick = { 
+                    if (uiState.isVoiceRecording) {
+                        viewModel.stopVoiceRecognition()
+                    } else {
+                        viewModel.handleIntent(KeyboardIntent.VoiceToTextPressed)
+                    }
+                }
             )
             Spacer(modifier = Modifier.height(4.dp))
             SuggestionBar(
