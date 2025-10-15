@@ -10,5 +10,15 @@ enum class KeyboardTheme {
     Orange,
     Green,
     Red,
-    Gray
+    Gray,
+    SunsetGradient,
+    OceanGradient,
+    ForestGradient,
+    LavenderGradient,
+    RoseGradient,
+    CitrusGradient,
+    SkyGradient,
+    MintGradient,
+    CoralGradient,
+    ElectricNeonGradient
 }

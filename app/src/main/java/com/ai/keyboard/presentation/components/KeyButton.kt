@@ -22,6 +22,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -77,7 +78,7 @@ fun KeyButton(
     )
 
     val background by animateColorAsState(
-        targetValue = if (isPressed) AIKeyboardTheme.colors.background else AIKeyboardTheme.colors.keyBackground,
+        targetValue = if (isPressed) AIKeyboardTheme.colors.keyBackground else AIKeyboardTheme.colors.keyBackground,
         animationSpec = tween(durationMillis = 50),
         label = "keyBackground"
     )
@@ -122,7 +123,7 @@ fun KeyButton(
                                             delay(300)
                                             isLongPressTriggered = true
                                             showTooltip = false
-                                            
+
                                             // Special case for 'v' key - direct paste without popup
                                             if (text == "v") {
                                                 onLongPress?.invoke("v")

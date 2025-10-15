@@ -64,11 +64,13 @@ fun KeyboardScreen(
         viewModel.setOnKeyPressListener(onKeyPress)
     }
 
-    AIKeyboardTheme(keyboardTheme = uiState.keyboardState.theme) {
+    AIKeyboardTheme(
+        keyboardTheme = uiState.keyboardState.theme
+    ) {
         Column(
             modifier = modifier
                 .fillMaxWidth()
-                .background(AIKeyboardTheme.colors.background)
+                .background(AIKeyboardTheme.colors.backgroundBrush)
                 .padding(vertical = 4.dp, horizontal = 6.dp)
                 .navigationBarsPadding()
         ) {
