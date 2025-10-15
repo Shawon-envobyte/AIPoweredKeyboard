@@ -2,6 +2,8 @@ package com.ai.keyboard.data.repository
 
 import android.util.Log
 import com.ai.keyboard.core.util.ResultWrapper
+import com.ai.keyboard.data.mapper.aiWritingAssistancePrompt
+import com.ai.keyboard.data.mapper.aiWritingAssistanceSystemPrompt
 import com.ai.keyboard.data.mapper.contentRephrasePrompt
 import com.ai.keyboard.data.mapper.contentRephraseSystemPrompt
 import com.ai.keyboard.data.mapper.fixGrammarPrompt
@@ -10,6 +12,10 @@ import com.ai.keyboard.data.mapper.quickReplyPrompt
 import com.ai.keyboard.data.mapper.quickReplySystemPrompt
 import com.ai.keyboard.data.mapper.toAPIRequest
 import com.ai.keyboard.data.mapper.toAPIRequestQuickReply
+import com.ai.keyboard.data.mapper.translatePrompt
+import com.ai.keyboard.data.mapper.translateSystemPrompt
+import com.ai.keyboard.data.mapper.wordTonePrompt
+import com.ai.keyboard.data.mapper.wordToneSystemPrompt
 import com.ai.keyboard.data.source.local.CacheManager
 import com.ai.keyboard.data.source.local.LocalAIEngine
 import com.ai.keyboard.data.source.remote.api.APIDataSource
@@ -132,6 +138,62 @@ class AIRepositoryImpl(
             ResultWrapper.Failure(e.message ?: "Unknown error")
         }
 
+    }
+
+    override suspend fun wordTone(
+        content: String,
+        language: String,
+        action: String
+    ): ResultWrapper<String> {
+        return try {
+            val response = remoteSource.getResponseFromAPI(
+                request = wordTonePrompt(
+                    content = content,
+                    language = language,
+                    action = action
+                ).toAPIRequest(wordToneSystemPrompt())
+            )
+            ResultWrapper.Success(response.candidates.first().content.parts.first().text)
+        } catch (e: Exception) {
+            ResultWrapper.Failure(e.message ?: "Unknown error")
+        }
+    }
+
+
+    override suspend fun aiWritingAssistance(
+        content: String,
+        language: String,
+        action: String
+    ): ResultWrapper<String> {
+        return try {
+            val response = remoteSource.getResponseFromAPI(
+                request = aiWritingAssistancePrompt(
+                    content = content,
+                    language = language,
+                    action = action
+                ).toAPIRequest(aiWritingAssistanceSystemPrompt())
+            )
+            ResultWrapper.Success(response.candidates.first().content.parts.first().text)
+        } catch (e: Exception) {
+            ResultWrapper.Failure(e.message ?: "Unknown error")
+        }
+    }
+
+        override suspend fun translate(
+        content: String,
+        language: String
+    ): ResultWrapper<String> {
+        return try {
+            val response = remoteSource.getResponseFromAPI(
+                request = translatePrompt(
+                    content = content,
+                    language = language
+                ).toAPIRequest(translateSystemPrompt())
+            )
+            ResultWrapper.Success(response.candidates.first().content.parts.first().text)
+        } catch (e: Exception) {
+            ResultWrapper.Failure(e.message ?: "Unknown error")
+        }
     }
 }
 

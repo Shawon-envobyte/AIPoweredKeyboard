@@ -9,8 +9,11 @@ import android.os.VibratorManager
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.ComposeView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -27,6 +30,9 @@ import com.ai.keyboard.presentation.screen.keyboard.KeyboardScreen
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardViewModel
 import org.koin.android.ext.android.inject
 
+object KeyboardBridge {
+    var ime: KeyboardIME? = null
+}
 class KeyboardIME : InputMethodService(),
     LifecycleOwner,
     ViewModelStoreOwner,
@@ -65,6 +71,7 @@ class KeyboardIME : InputMethodService(),
 
     override fun onCreate() {
         super.onCreate()
+        KeyboardBridge.ime = this
         savedStateRegistryController.performAttach()
         savedStateRegistryController.performRestore(null)
         lifecycleRegistry.currentState = Lifecycle.State.CREATED
@@ -89,6 +96,9 @@ class KeyboardIME : InputMethodService(),
                 val uiState by viewModel.uiState.collectAsState()
 
                 KeyboardScreen(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .graphicsLayer { clip = false },
                     onTextChange = ::commitText,
                     onCursorChange = ::moveCursor,
                     onTextSelectAndDelete = ::selectAndDelete,
@@ -130,7 +140,10 @@ class KeyboardIME : InputMethodService(),
             candidatesStart,
             candidatesEnd
         )
-
+        val allText = getAllTextFromInputField()
+        if (allText != null) {
+            viewModel.updateInputFieldText(allText)
+        }
         // Update cursor position in ViewModel
         if (newSelStart != -1 && newSelStart == newSelEnd) {
             // Get current text from InputConnection
@@ -154,6 +167,7 @@ class KeyboardIME : InputMethodService(),
     }
 
     override fun onDestroy() {
+        KeyboardBridge.ime = null
         lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
         store.clear()
         super.onDestroy()
@@ -230,4 +244,30 @@ class KeyboardIME : InputMethodService(),
             e.printStackTrace()
         }
     }
+
+    private fun getAllTextFromInputField(): String? {
+        val ic = currentInputConnection ?: return null
+        val extracted = ic.getExtractedText(android.view.inputmethod.ExtractedTextRequest(), 0)
+        return extracted?.text?.toString()
+    }
+    fun replaceInputFieldText(newText: String) {
+        val ic = currentInputConnection ?: return
+        try {
+            // Get all existing text
+            val currentText = getAllTextFromInputField() ?: ""
+            if (currentText.isNotEmpty()) {
+                // Select all text
+                ic.setSelection(0, currentText.length)
+                // Replace with new text
+                ic.commitText(newText, 1)
+            } else {
+                // If field is empty, just insert the new text
+                ic.commitText(newText, 1)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+
 }

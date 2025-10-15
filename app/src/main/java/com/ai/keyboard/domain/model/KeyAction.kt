@@ -7,6 +7,7 @@ sealed class KeyAction {
     object Space : KeyAction()
     object Shift : KeyAction()
     object Symbol : KeyAction()
+    object Emoji : KeyAction()
     object ExtendedSymbol : KeyAction()
     data class MoveCursor(val amount: Int) : KeyAction()
     data class SelectAndDelete(val amount: Int) : KeyAction()

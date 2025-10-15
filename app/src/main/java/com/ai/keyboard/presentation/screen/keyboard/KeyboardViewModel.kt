@@ -13,11 +13,17 @@ import com.ai.keyboard.domain.model.KeyboardTheme
 import com.ai.keyboard.domain.model.QuickReply
 import com.ai.keyboard.domain.repository.SettingsRepository
 import com.ai.keyboard.domain.usecase.FixGrammarUseCase
+import com.ai.keyboard.domain.usecase.GetAiWritingAssistanceUseCase
 import com.ai.keyboard.domain.usecase.GetSuggestionsUseCase
 import com.ai.keyboard.domain.usecase.QuickReplyUseCase
+import com.ai.keyboard.domain.usecase.GetTranslateUseCase
+import com.ai.keyboard.domain.usecase.GetWordToneUseCase
 import com.ai.keyboard.domain.usecase.RephraseContentUseCase
+import com.ai.keyboard.presentation.model.AIWritingAssistanceType
 import com.ai.keyboard.presentation.model.ActionButtonType
 import com.ai.keyboard.presentation.model.LanguageType
+import com.ai.keyboard.presentation.model.WordToneType
+import com.ai.keyboard.presentation.service.KeyboardBridge
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
@@ -37,6 +43,11 @@ class KeyboardViewModel(
     private val fixGrammarUseCase: FixGrammarUseCase,
     private val quickReplyUseCase: QuickReplyUseCase
 ) : ViewModel(){
+    private val fixGrammarUseCase: FixGrammarUseCase,
+    private val getWordToneUseCase: GetWordToneUseCase,
+    private val getAiWritingAssistanceUseCase: GetAiWritingAssistanceUseCase,
+    private val getTranslateUseCase: GetTranslateUseCase
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(KeyboardUIState())
     val uiState: StateFlow<KeyboardUIState> = _uiState.asStateFlow()
@@ -147,8 +158,12 @@ class KeyboardViewModel(
             is KeyboardIntent.ToggleSound -> toggleSound()
             is KeyboardIntent.CursorPositionChanged -> updateCursorPosition(intent.position)
             is KeyboardIntent.ToggleNumerRow -> toggleNumerRow()
+            is KeyboardIntent.EmojiPressed -> toggleEmoji()
             is KeyboardIntent.FixGrammarPressed -> toggleFixGrammar()
             is KeyboardIntent.GetQuickReply -> getQuickReply()
+            is KeyboardIntent.RewritePressed -> toggleRewrite()
+            is KeyboardIntent.AiAssistancePressed -> toggleAiAssistance()
+            is KeyboardIntent.TranslatePressed -> toggleTranslate()
         }
     }
 
@@ -216,7 +231,7 @@ class KeyboardViewModel(
                 textChanged = false
             }
 
-            KeyAction.Shift, KeyAction.Symbol, KeyAction.ExtendedSymbol -> {
+            KeyAction.Shift, KeyAction.Symbol, KeyAction.Emoji, KeyAction.ExtendedSymbol -> {
                 textChanged = false
             }
 
@@ -316,6 +331,17 @@ class KeyboardViewModel(
         updateMode(newMode)
     }
 
+    private fun toggleEmoji() {
+        val currentMode = _uiState.value.keyboardState.mode
+        val newMode = if (currentMode == KeyboardMode.EMOJI) {
+            KeyboardMode.LOWERCASE
+        } else {
+            KeyboardMode.EMOJI
+        }
+        updateMode(newMode)
+    }
+
+
     private fun toggleExtendedSymbol() {
         val currentMode = _uiState.value.keyboardState.mode
         val newMode = when (currentMode) {
@@ -332,7 +358,15 @@ class KeyboardViewModel(
     private fun toggleFixGrammar() {
         updateMode(KeyboardMode.FIX_GRAMMAR)
     }
-
+    private fun toggleRewrite() {
+        updateMode(KeyboardMode.REWRITE)
+    }
+    private fun toggleAiAssistance() {
+        updateMode(KeyboardMode.AI_ASSISTANCE)
+    }
+    private fun toggleTranslate() {
+        updateMode(KeyboardMode.TRANSLATE)
+    }
     private fun updateMode(mode: KeyboardMode) {
         updateKeyboardState { copy(mode = mode) }
     }
@@ -392,10 +426,15 @@ class KeyboardViewModel(
         }
     }
 
+    fun updateInputFieldText(text: String) {
+        _uiState.update { current ->
+            current.copy(inputFieldText = text)
+        }
+    }
 
     fun getGrammar() {
-        val currentState = _uiState.value.keyboardState
-        var currentText = currentState.currentText
+        val currentState = _uiState.value
+        var currentText = currentState.inputFieldText
         viewModelScope.launch {
             val result = fixGrammarUseCase(
                 content = currentText,
@@ -426,6 +465,102 @@ class KeyboardViewModel(
         }
     }
 
+    fun getWordTone() {
+        val currentState = _uiState.value
+        var currentText = currentState.inputFieldText
+        viewModelScope.launch {
+            val result = getWordToneUseCase(
+                content = currentText,
+                language = _uiState.value.language.name,
+                action = _uiState.value.selectedAction.name
+            )
+
+            when (result) {
+                is ResultWrapper.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        correctedText = result.data,
+                        error = ""
+                    )
+                }
+
+                is ResultWrapper.Failure -> {
+                    _uiState.value = _uiState.value.copy(
+                        error = result.message
+                    )
+                }
+
+                is ResultWrapper.Loading -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = true
+                    )
+                }
+            }
+        }
+    }
+
+    fun getAiAssistance() {
+        val currentState = _uiState.value
+        var currentText = currentState.inputFieldText
+        viewModelScope.launch {
+            val result = getAiWritingAssistanceUseCase(
+                content = currentText,
+                language = _uiState.value.language.name,
+                action = _uiState.value.selectedAction.name
+            )
+
+            when (result) {
+                is ResultWrapper.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        correctedText = result.data,
+                        error = ""
+                    )
+                }
+
+                is ResultWrapper.Failure -> {
+                    _uiState.value = _uiState.value.copy(
+                        error = result.message
+                    )
+                }
+
+                is ResultWrapper.Loading -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = true
+                    )
+                }
+            }
+        }
+    }
+    fun getTranslate() {
+        val currentState = _uiState.value
+        var currentText = currentState.inputFieldText
+        viewModelScope.launch {
+            val result = getTranslateUseCase(
+                content = currentText,
+                language = _uiState.value.language.name
+            )
+
+            when (result) {
+                is ResultWrapper.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        correctedText = result.data,
+                        error = ""
+                    )
+                }
+
+                is ResultWrapper.Failure -> {
+                    _uiState.value = _uiState.value.copy(
+                        error = result.message
+                    )
+                }
+
+                is ResultWrapper.Loading -> {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = true
+                    )
+                }
+            }
+        }
+    }
     fun onLanguageSelected(language: LanguageType) {
         _uiState.value = _uiState.value.copy(
             language = language
@@ -453,5 +588,19 @@ class KeyboardViewModel(
 
 
 
+
+    fun onSelectedAiActionChange(action: AIWritingAssistanceType) {
+        _uiState.value = _uiState.value.copy(
+            selectedAiAction = action
+        )
+    }
+    fun onSelectedWordActionChange(action: WordToneType) {
+        _uiState.value = _uiState.value.copy(
+            selectedWordAction = action
+        )
+    }
+    fun replaceCurrentInputWith(newText: String) {
+        KeyboardBridge.ime?.replaceInputFieldText(newText)
+    }
 
 }

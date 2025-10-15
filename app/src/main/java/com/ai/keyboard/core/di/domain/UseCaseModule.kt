@@ -4,7 +4,6 @@ import com.ai.keyboard.domain.usecase.CorrectGrammarUseCase
 import com.ai.keyboard.domain.usecase.FixGrammarUseCase
 import com.ai.keyboard.domain.usecase.GetSuggestionsUseCase
 import com.ai.keyboard.domain.usecase.PredictNextWordUseCase
-import com.ai.keyboard.domain.usecase.QuickReplyUseCase
 import com.ai.keyboard.domain.usecase.RephraseContentUseCase
 import org.koin.dsl.module
 
@@ -15,4 +14,8 @@ val useCaseModule = module {
     single { RephraseContentUseCase(get()) }
     factory { FixGrammarUseCase(get()) }
     factory { QuickReplyUseCase(get()) }
+    factory { GetWordToneUseCase(get()) }
+    factory { GetAiWritingAssistanceUseCase(get()) }
+    factory { GetTranslateUseCase(get()) }
+
 }

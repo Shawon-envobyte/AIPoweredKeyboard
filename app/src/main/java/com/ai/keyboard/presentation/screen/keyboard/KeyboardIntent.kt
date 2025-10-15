@@ -9,6 +9,7 @@ sealed class KeyboardIntent {
     data class CursorPositionChanged(val position: Int) : KeyboardIntent()
     object ShiftPressed : KeyboardIntent()
     object SymbolPressed : KeyboardIntent()
+    object EmojiPressed : KeyboardIntent()
     object AlphabetPressed : KeyboardIntent()
     object ExtendedSymbolPressed : KeyboardIntent()
     data class ThemeChanged(val theme: KeyboardTheme) : KeyboardIntent()
@@ -17,4 +18,7 @@ sealed class KeyboardIntent {
     object ToggleNumerRow : KeyboardIntent()
     object FixGrammarPressed : KeyboardIntent()
     object GetQuickReply : KeyboardIntent()
+    object RewritePressed : KeyboardIntent()
+    object AiAssistancePressed : KeyboardIntent()
+    object TranslatePressed : KeyboardIntent()
 }

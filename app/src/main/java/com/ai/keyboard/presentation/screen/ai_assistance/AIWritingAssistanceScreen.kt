@@ -1,4 +1,4 @@
-package com.ai.keyboard.presentation.screen.fix_grammar
+package com.ai.keyboard.presentation.screen.ai_assistance
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,21 +13,21 @@ import com.ai.keyboard.presentation.components.ActionButtonRow
 import com.ai.keyboard.presentation.components.ContentCard
 import com.ai.keyboard.presentation.components.CustomBottomBar
 import com.ai.keyboard.presentation.components.CustomToolbar
-import com.ai.keyboard.presentation.model.ActionButtonType
+import com.ai.keyboard.presentation.model.AIWritingAssistanceType
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardUIState
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardViewModel
 
 @Composable
-fun FixGrammarScreen(
+fun AIWritingAssistanceScreen(
     uiState: KeyboardUIState,
     viewModel: KeyboardViewModel,
     onBackButtonClick: () -> Unit,
 ) {
     LaunchedEffect(key1 = Unit, key2 = uiState.language, key3 = uiState.selectedAction) {
-        viewModel.getGrammar()
+        viewModel.getAiAssistance()
 
     }
-    FixGrammarScreenContent(
+    AIWritingAssistanceScreenContent(
         uiState = uiState,
         viewModel = viewModel,
         onBackButtonClick = onBackButtonClick,
@@ -35,7 +35,7 @@ fun FixGrammarScreen(
 }
 
 @Composable
-fun FixGrammarScreenContent(
+fun AIWritingAssistanceScreenContent(
     uiState: KeyboardUIState,
     viewModel: KeyboardViewModel,
     onBackButtonClick: () -> Unit,
@@ -51,9 +51,9 @@ fun FixGrammarScreenContent(
             onLanguageSelected = { viewModel.onLanguageSelected(it) }
         )
         ActionButtonRow(
-            actions = ActionButtonType.entries.map { it },
-            selectedAction = uiState.selectedAction,
-            onActionClick = { viewModel.onSelectedActionChange(it) },
+            actions = AIWritingAssistanceType.entries.map { it },
+            selectedAction = uiState.selectedAiAction,
+            onActionClick = { viewModel.onSelectedAiActionChange(it) },
             labelProvider = { it.label },
             iconProvider = { it.icon },
             emojiProvider = { it.emoji },

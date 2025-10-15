@@ -1,5 +1,7 @@
 package com.ai.keyboard.presentation.components
 
+import androidx.compose.ui.tooling.preview.Preview
+import com.ai.keyboard.presentation.model.ActionButtonType
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -21,21 +23,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ai.keyboard.presentation.model.ActionButtonType
 import com.ai.keyboard.presentation.theme.DropdownGradient
 import com.ai.keyboard.presentation.theme.VeryLightGray
 
 @Composable
-fun ActionButtonRow(
+fun <T : Enum<T>> ActionButtonRow(
     modifier: Modifier = Modifier,
-    actions: List<ActionButtonType>,
-    selectedAction: ActionButtonType? = null,
-    onActionClick: (ActionButtonType) -> Unit
+    actions: List<T>,
+    selectedAction: T? = null,
+    onActionClick: (T) -> Unit,
+    labelProvider: (T) -> String,
+    iconProvider: (T) -> Int? = { null },
+    emojiProvider: (T) -> String? = { null },
+    gradientProvider: (T) -> Boolean = { false }
 ) {
-    var selectedAction by remember { mutableStateOf(selectedAction) }
+    var selected by remember { mutableStateOf(selectedAction) }
 
     Row(
         modifier = modifier
@@ -45,12 +49,15 @@ fun ActionButtonRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         actions.forEach { action ->
-            val isSelected = action == selectedAction
-            ActionButtonItem(
-                action = action,
+            val isSelected = action == selected
+            GenericActionButtonItem(
+                label = labelProvider(action),
+                icon = iconProvider(action),
+                emoji = emojiProvider(action),
+                isGradient = gradientProvider(action),
                 isSelected = isSelected,
                 onClick = {
-                    selectedAction = action
+                    selected = action
                     onActionClick(action)
                 }
             )
@@ -59,20 +66,21 @@ fun ActionButtonRow(
 }
 
 @Composable
-fun ActionButtonItem(
-    action: ActionButtonType,
-    isSelected: Boolean,
+fun GenericActionButtonItem(
+    label: String,
+    icon: Int? = null,
+    emoji: String? = null,
+    isGradient: Boolean = false,
+    isSelected: Boolean = false,
     onClick: () -> Unit
 ) {
-
-
     val shape = RoundedCornerShape(24.dp)
 
     Row(
         modifier = Modifier
             .clip(shape)
             .background(
-                brush = if (isSelected || action.isGradient)
+                brush = if (isSelected || isGradient)
                     DropdownGradient
                 else
                     SolidColor(VeryLightGray)
@@ -82,25 +90,27 @@ fun ActionButtonItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        if (action.icon != null) {
-            Icon(
-                painter = painterResource(id = action.icon),
-                contentDescription = action.label,
-                tint = Color.Unspecified,
-                modifier = Modifier.size(20.dp)
-            )
-        } else if (action.emoji != null) {
-            Text(
-                text = action.emoji,
-                fontSize = 18.sp
-            )
+        when {
+            icon != null -> {
+                Icon(
+                    painter = painterResource(id = icon),
+                    contentDescription = label,
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+
+            emoji != null -> {
+                Text(text = emoji, fontSize = 18.sp)
+            }
         }
 
         Text(
-            text = action.label,
-            color = if (isSelected || action.isGradient) MaterialTheme.colorScheme.background else MaterialTheme.colorScheme.onSurface.copy(
-                alpha = 0.6f
-            ),
+            text = label,
+            color = if (isSelected || isGradient)
+                MaterialTheme.colorScheme.background
+            else
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.sp
@@ -117,8 +127,13 @@ fun ActionButtonRowPreview() {
 
     MaterialTheme {
         ActionButtonRow(
-            actions = ActionButtonType.entries.map { it },
-            onActionClick = { println("Clicked: ${it.label}") }
+            actions = ActionButtonType.entries,
+            selectedAction = ActionButtonType.REPHRASE,
+            onActionClick = { println("Clicked: ${it.name}") },
+            labelProvider = { it.label },
+            iconProvider = { it.icon },
+            emojiProvider = { it.emoji },
+            gradientProvider = { it.isGradient }
         )
     }
 }
