@@ -59,8 +59,12 @@ fun AlphabeticKeyboard(
                 KeyButton(
                     text = char,
                     onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(char))) },
-                    onLongPress = {
-                        onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(it)))
+                    onLongPress = { selectedChar ->
+                        if (char == "v") {
+                            onIntent(KeyboardIntent.PasteFromClipboard)
+                        } else {
+                            onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(selectedChar)))
+                        }
                     },
                     mode = mode,
                     modifier = Modifier.weight(1f)
@@ -88,6 +92,13 @@ fun AlphabeticKeyboard(
                 KeyButton(
                     text = char,
                     onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(char))) },
+                    onLongPress = { selectedChar ->
+                        if (char == "v") {
+                            onIntent(KeyboardIntent.PasteFromClipboard)
+                        } else {
+                            onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(selectedChar)))
+                        }
+                    },
                     mode = mode,
                     modifier = Modifier.weight(1f)
                 )
