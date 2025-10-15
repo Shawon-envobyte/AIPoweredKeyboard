@@ -22,7 +22,10 @@ import com.ai.keyboard.presentation.keyboard.AlphabeticKeyboard
 import com.ai.keyboard.presentation.keyboard.EmojiKeyboard
 import com.ai.keyboard.presentation.keyboard.ExtendedSymbolKeyboard
 import com.ai.keyboard.presentation.keyboard.SymbolKeyboard
+import com.ai.keyboard.presentation.screen.ai_assistance.AIWritingAssistanceScreen
 import com.ai.keyboard.presentation.screen.fix_grammar.FixGrammarScreen
+import com.ai.keyboard.presentation.screen.translate.TranslateScreen
+import com.ai.keyboard.presentation.screen.word_tone.WordToneScreen
 import com.ai.keyboard.presentation.theme.AIKeyboardTheme
 import org.koin.androidx.compose.koinViewModel
 
@@ -69,10 +72,10 @@ fun KeyboardScreen(
 
             OptionBar(
                 onGrammarClick = { viewModel.handleIntent(KeyboardIntent.FixGrammarPressed) },
-                onMagicClick = {},
-                onTranslateClick = {},
+                onMagicClick = { viewModel.handleIntent(KeyboardIntent.RewritePressed) },
+                onTranslateClick = { viewModel.handleIntent(KeyboardIntent.TranslatePressed) },
                 onChatClick = {},
-                onClipboardClick = {},
+                onClipboardClick = { viewModel.handleIntent(KeyboardIntent.AiAssistancePressed) },
                 onEmojiClick = { viewModel.handleIntent(KeyboardIntent.EmojiPressed) },
                 onDotClick = {},
                 onMicClick = {}
@@ -121,7 +124,27 @@ fun KeyboardScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
-
+                KeyboardMode.REWRITE -> {
+                    WordToneScreen(
+                        uiState = uiState,
+                        viewModel = viewModel,
+                        onBackButtonClick = { viewModel.handleIntent(KeyboardIntent.AlphabetPressed) },
+                    )
+                }
+                KeyboardMode.AI_ASSISTANCE -> {
+                    AIWritingAssistanceScreen(
+                        uiState = uiState,
+                        viewModel = viewModel,
+                        onBackButtonClick = { viewModel.handleIntent(KeyboardIntent.AlphabetPressed) },
+                    )
+                }
+                KeyboardMode.TRANSLATE -> {
+                    TranslateScreen(
+                        uiState = uiState,
+                        viewModel = viewModel,
+                        onBackButtonClick = { viewModel.handleIntent(KeyboardIntent.AlphabetPressed) },
+                    )
+                }
                 else -> {
                     AlphabeticKeyboard(
                         mode = keyboardMode,

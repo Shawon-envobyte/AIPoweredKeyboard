@@ -25,9 +25,27 @@ interface AIRepository {
         tone: String
     ): ResultWrapper<String>
 
-        suspend fun fixGrammar(
+    suspend fun fixGrammar(
         content: String,
         language: String,
         action: String
+    ): ResultWrapper<String>
+
+
+    suspend fun wordTone(
+        content: String,
+        language: String,
+        action: String
+    ): ResultWrapper<String>
+
+    suspend fun aiWritingAssistance(
+        content: String,
+        language: String,
+        action: String
+    ): ResultWrapper<String>
+
+    suspend fun translate(
+        content: String,
+        language: String
     ): ResultWrapper<String>
 }

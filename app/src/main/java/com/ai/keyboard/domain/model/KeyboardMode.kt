@@ -8,5 +8,8 @@ enum class KeyboardMode {
     EXTENDED_SYMBOLS,
     NUMBERS,
     FIX_GRAMMAR,
-    EMOJI
+    EMOJI,
+    REWRITE,
+    AI_ASSISTANCE,
+    TRANSLATE
 }
