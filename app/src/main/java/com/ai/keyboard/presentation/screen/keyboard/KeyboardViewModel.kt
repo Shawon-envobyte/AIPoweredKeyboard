@@ -195,10 +195,10 @@ class KeyboardViewModel(
 
             is KeyAction.Enter -> {
                 currentText = StringBuilder(currentText).apply {
-                    insert(cursorPosition, "\n")
+                    insert(cursorPosition, "")
                 }.toString()
                 cursorPosition += 1
-                characterToCommit = "\n"
+                characterToCommit = ""
             }
 
             is KeyAction.Space -> {
@@ -265,32 +265,40 @@ class KeyboardViewModel(
     private fun insertSuggestion(suggestion: String) {
         val currentState = _uiState.value.keyboardState
         val currentText = currentState.currentText
-        val cursorPos = currentState.cursorPosition
 
-        // Find the start of the current word
-        var wordStart = cursorPos
-        while (wordStart > 0 && currentText[wordStart - 1].isLetterOrDigit()) {
-            wordStart--
+        println("current: $currentText")
+
+        // Trim trailing spaces
+        val trimmedText = currentText.trimEnd()
+
+        // Find last space (to isolate last word)
+        val lastSpaceIndex = trimmedText.lastIndexOf(' ')
+
+        // Text before the last word
+        val textWithoutLastWord = if (lastSpaceIndex != -1) {
+            trimmedText.substring(0, lastSpaceIndex + 1)
+        } else {
+            ""
         }
 
-        // Replace current word with suggestion
-        val newText = StringBuilder(currentText).apply {
-            delete(wordStart, cursorPos)
-            insert(wordStart, "$suggestion ")
-        }.toString()
+        val finalText = "$textWithoutLastWord$suggestion "
+        println("finalText: $finalText")
 
-        val newCursorPos = wordStart + suggestion.length + 1
+        val charsToDelete = trimmedText.length - (lastSpaceIndex + 1).coerceAtLeast(0)
+        if (charsToDelete > 0) {
+            onTextSelectAndDeleteListener?.invoke(charsToDelete)
+        }
+
+        onTextChangeListener?.invoke("$suggestion ", textWithoutLastWord.length + suggestion.length + 1)
+        onKeyPressListener?.invoke()
+        textChangeChannel.trySend(finalText)
 
         updateKeyboardState {
             copy(
-                currentText = newText,
-                cursorPosition = newCursorPos
+                currentText = finalText,
+                cursorPosition = finalText.length
             )
         }
-
-        onTextChangeListener?.invoke(newText, newCursorPos)
-        onKeyPressListener?.invoke()
-        textChangeChannel.trySend(newText)
     }
 
     private fun toggleShift() {
