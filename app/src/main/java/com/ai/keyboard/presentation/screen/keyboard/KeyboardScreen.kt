@@ -75,6 +75,8 @@ fun KeyboardScreen(
                 .navigationBarsPadding()
         ) {
             OptionBar(
+                onUndoClick = { viewModel.handleIntent(KeyboardIntent.UndoPressed) },
+                onRedoClick = { viewModel.handleIntent(KeyboardIntent.RedoPressed) },
                 onGrammarClick = { viewModel.handleIntent(KeyboardIntent.FixGrammarPressed) },
                 onMagicClick = { viewModel.handleIntent(KeyboardIntent.RewritePressed) },
                 onTranslateClick = { viewModel.handleIntent(KeyboardIntent.TranslatePressed) },
