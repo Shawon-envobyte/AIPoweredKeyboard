@@ -67,7 +67,7 @@ fun KeyButton(
     val density = LocalDensity.current
 
     // Cache long press availability
-    val hasLongPressOptions = remember(text) { longPressMap.containsKey(text) }
+    val hasLongPressOptions = remember(text) { longPressMap.containsKey(text) || text == "v" }
 
     // Instant visual feedback animation
     val elevation by animateDpAsState(
@@ -122,7 +122,13 @@ fun KeyButton(
                                             delay(300)
                                             isLongPressTriggered = true
                                             showTooltip = false
-                                            showPopup = true
+                                            
+                                            // Special case for 'v' key - direct paste without popup
+                                            if (text == "v") {
+                                                onLongPress?.invoke("v")
+                                            } else {
+                                                showPopup = true
+                                            }
                                         }
                                     }
                                 }

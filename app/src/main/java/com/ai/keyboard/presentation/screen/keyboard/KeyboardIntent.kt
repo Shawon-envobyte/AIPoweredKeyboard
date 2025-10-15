@@ -22,4 +22,5 @@ sealed class KeyboardIntent {
     object AiAssistancePressed : KeyboardIntent()
     object TranslatePressed : KeyboardIntent()
     object VoiceToTextPressed : KeyboardIntent()
+    object PasteFromClipboard : KeyboardIntent()
 }

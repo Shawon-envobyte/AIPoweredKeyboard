@@ -12,6 +12,7 @@ import android.view.inputmethod.EditorInfo
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.ai.keyboard.core.clipboard.AndroidClipboardManager
 import com.ai.keyboard.core.service.ServiceDataPass
 import com.ai.keyboard.core.util.ResultWrapper
 import com.ai.keyboard.domain.model.KeyAction
@@ -53,7 +54,8 @@ class KeyboardViewModel(
     private val quickReplyUseCase: QuickReplyUseCase,
     private val getWordToneUseCase: GetWordToneUseCase,
     private val getAiWritingAssistanceUseCase: GetAiWritingAssistanceUseCase,
-    private val getTranslateUseCase: GetTranslateUseCase
+    private val getTranslateUseCase: GetTranslateUseCase,
+    private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(KeyboardUIState())
@@ -61,6 +63,7 @@ class KeyboardViewModel(
 
     private val textChangeChannel = Channel<String>(Channel.CONFLATED)
     private var speechRecognizer: SpeechRecognizer? = null
+    private val clipboardManager = AndroidClipboardManager(context)
 
     private var onTextChangeListener: ((String, Int) -> Unit)? = null
     private var onCursorChangeListener: ((Int) -> Unit)? = null
@@ -182,6 +185,7 @@ class KeyboardViewModel(
             is KeyboardIntent.AiAssistancePressed -> toggleAiAssistance()
             is KeyboardIntent.TranslatePressed -> toggleTranslate()
             is KeyboardIntent.VoiceToTextPressed -> startVoiceRecognition()
+            is KeyboardIntent.PasteFromClipboard -> pasteFromClipboard()
         }
     }
 
@@ -786,6 +790,32 @@ class KeyboardViewModel(
         speechRecognizer?.stopListening()
         _uiState.update { 
             it.copy(isVoiceRecording = false)
+        }
+    }
+
+    private fun pasteFromClipboard() {
+        val clipboardText = clipboardManager.getClipboardText()
+        if (clipboardText.isNotEmpty()) {
+            val currentState = _uiState.value.keyboardState
+            val currentText = currentState.currentText
+            val cursorPosition = currentState.cursorPosition
+            
+            val newText = StringBuilder(currentText).apply {
+                insert(cursorPosition, clipboardText)
+            }.toString()
+            
+            val newCursorPosition = cursorPosition + clipboardText.length
+            
+            updateKeyboardState {
+                copy(
+                    currentText = newText,
+                    cursorPosition = newCursorPosition
+                )
+            }
+            
+            onTextChangeListener?.invoke(newText, newCursorPosition)
+            onCursorChangeListener?.invoke(newCursorPosition)
+            onKeyPressListener?.invoke()
         }
     }
 
