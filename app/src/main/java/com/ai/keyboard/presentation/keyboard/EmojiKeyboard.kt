@@ -37,7 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ai.keyboard.domain.model.KeyAction
-import com.ai.keyboard.presentation.components.Backspace
+import com.ai.keyboard.presentation.components.BackspaceKey
 import com.ai.keyboard.presentation.components.SpecialKeyButton
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardIntent
 import com.ai.keyboard.presentation.theme.AIKeyboardTheme
@@ -283,7 +283,7 @@ fun EmojiKeyboard(
 
             Spacer(modifier = Modifier.weight(4f))
 
-            Backspace(
+            BackspaceKey(
                 modifier = Modifier.weight(1.5f),
                 text = "⌫",
                 onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Backspace)) },

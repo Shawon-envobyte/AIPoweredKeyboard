@@ -1,17 +1,16 @@
 package com.ai.keyboard.presentation.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -26,17 +25,50 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ai.keyboard.presentation.theme.AIKeyboardTheme
+import kotlinx.coroutines.delay
 
 @Composable
-fun Space(
-    modifier: Modifier = Modifier,
-    text: String = "Space",
+fun BackspaceKey(
+    text: String,
     onClick: () -> Unit,
-    onSwipe: (Int) -> Unit
+    modifier: Modifier = Modifier,
+    onRepeat: (() -> Unit)? = null,           // called during long-press
+    initialDelay: Long = 200L,                // wait before repeating starts
+    initialInterval: Long = 100L,             // first repeat interval
+    minInterval: Long = 30L,                  // fastest repeat
+    accelerateBy: Float = 0.90f,              // 0.88 => ~12% faster each tick
+    onSelectionSwipe: (Int) -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    var isRepeating by remember { mutableStateOf(false) }
+    var accumulatedDrag by remember { mutableFloatStateOf(0f) }
+
+    // Start/stop the repeating loop
+    LaunchedEffect(isRepeating) {
+        if (!isRepeating || onRepeat == null) return@LaunchedEffect
+        delay(initialDelay)
+        var interval = initialInterval
+        while (isRepeating) {
+            onRepeat()
+            delay(interval)
+            interval = (interval * accelerateBy).toLong().coerceAtLeast(minInterval)
+        }
+    }
+
+    // End repeat when finger lifts or cancels
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is androidx.compose.foundation.interaction.PressInteraction.Release,
+                is androidx.compose.foundation.interaction.PressInteraction.Cancel -> {
+                    isRepeating = false
+                }
+            }
+        }
+    }
+
     val backgroundColor = AIKeyboardTheme.colors.specialKeyBackground
     val textColor = AIKeyboardTheme.colors.specialKeyText
-    var accumulatedDrag by remember { mutableFloatStateOf(0f) }
 
     Box(
         modifier = modifier
@@ -45,9 +77,13 @@ fun Space(
             .shadow(2.dp, RoundedCornerShape(6.dp))
             .clip(RoundedCornerShape(6.dp))
             .background(backgroundColor)
-            .clickable(
+            .combinedClickable(
+                interactionSource = interactionSource,
+                indication = null,
                 onClick = onClick,
-                interactionSource = remember { MutableInteractionSource() },
+                onLongClick = {
+                    if (onRepeat != null) isRepeating = true
+                }
             )
             .pointerInput(Unit) {
                 detectHorizontalDragGestures(
@@ -57,7 +93,7 @@ fun Space(
                         val threshold = 20f
                         val moves = (accumulatedDrag / threshold).toInt()
                         if (moves != 0) {
-                            onSwipe(moves)
+                            onSelectionSwipe(moves)
                             accumulatedDrag -= moves * threshold
                         }
                     }
@@ -67,9 +103,9 @@ fun Space(
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.bodyMedium,
-            color = AIKeyboardTheme.colors.specialKeyText,
-            fontSize = 14.sp
+            color = textColor,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Medium
         )
     }
 }
