@@ -12,5 +12,6 @@ enum class KeyboardMode {
     REWRITE,
     AI_ASSISTANCE,
     TRANSLATE,
-    QUICK_REPLY
+    QUICK_REPLY,
+    CLIP_BOARD
 }

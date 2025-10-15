@@ -20,6 +20,7 @@ class PreferencesDataStore(private val context: Context) {
         private val HAPTIC_KEY = booleanPreferencesKey("haptic_enabled")
         private val SOUND_KEY = booleanPreferencesKey("sound_enabled")
         private val NUMER_ROW_ENABLED_KEY = booleanPreferencesKey("number_row_enabled")
+        private val CLIPBOARD_KEY = booleanPreferencesKey("clipboard_enabled")
     }
 
     suspend fun saveTheme(theme: KeyboardTheme) {
@@ -68,6 +69,18 @@ class PreferencesDataStore(private val context: Context) {
     fun isNumberRowEnabled(): Flow<Boolean> {
         return context.dataStore.data.map { preferences ->
             preferences[NUMER_ROW_ENABLED_KEY] ?: false
+        }
+    }
+
+    suspend fun saveClipboardEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[CLIPBOARD_KEY] = enabled
+        }
+    }
+
+    fun isClipboardEnabled(): Flow<Boolean> {
+        return context.dataStore.data.map { preferences ->
+            preferences[CLIPBOARD_KEY] ?: true
         }
     }
 }
