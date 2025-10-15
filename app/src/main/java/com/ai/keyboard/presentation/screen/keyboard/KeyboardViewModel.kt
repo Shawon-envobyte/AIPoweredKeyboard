@@ -15,6 +15,8 @@ import androidx.lifecycle.viewModelScope
 import com.ai.keyboard.core.clipboard.AndroidClipboardManager
 import com.ai.keyboard.core.service.ServiceDataPass
 import com.ai.keyboard.core.util.ResultWrapper
+import com.ai.keyboard.domain.model.ClipboardItem
+import com.ai.keyboard.domain.model.ClipboardState
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
 import com.ai.keyboard.domain.model.KeyboardState
@@ -22,9 +24,11 @@ import com.ai.keyboard.domain.model.KeyboardTheme
 import com.ai.keyboard.domain.repository.SettingsRepository
 import com.ai.keyboard.domain.usecase.FixGrammarUseCase
 import com.ai.keyboard.domain.usecase.GetAiWritingAssistanceUseCase
+import com.ai.keyboard.domain.usecase.GetClipboardItemsUseCase
 import com.ai.keyboard.domain.usecase.GetSuggestionsUseCase
 import com.ai.keyboard.domain.usecase.GetTranslateUseCase
 import com.ai.keyboard.domain.usecase.GetWordToneUseCase
+import com.ai.keyboard.domain.usecase.ManageClipboardUseCase
 import com.ai.keyboard.domain.usecase.QuickReplyUseCase
 import com.ai.keyboard.domain.usecase.RephraseContentUseCase
 import com.ai.keyboard.presentation.model.AIWritingAssistanceType
@@ -39,6 +43,8 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -55,6 +61,8 @@ class KeyboardViewModel(
     private val getWordToneUseCase: GetWordToneUseCase,
     private val getAiWritingAssistanceUseCase: GetAiWritingAssistanceUseCase,
     private val getTranslateUseCase: GetTranslateUseCase,
+    private val getClipboardItemsUseCase: GetClipboardItemsUseCase,
+    private val manageClipboardUseCase: ManageClipboardUseCase,
     private val context: Context
 ) : ViewModel() {
 
@@ -78,6 +86,7 @@ class KeyboardViewModel(
     init {
         observeSettings()
         setupSuggestionDebouncing()
+        observeClipboard()
     }
 
     fun initializeText(text: String, cursorPosition: Int) {
@@ -194,6 +203,14 @@ class KeyboardViewModel(
             is KeyboardIntent.TranslatePressed -> toggleTranslate()
             is KeyboardIntent.UndoPressed -> handleUndo()
             is KeyboardIntent.RedoPressed -> handleRedo()
+
+            // Clipboard intents
+            is KeyboardIntent.ClipboardOpen -> toggleClipboardOpen()
+            is KeyboardIntent.ToggleClipboardEnabled -> toggleClipboardEnabled()
+            is KeyboardIntent.ToggleClipboardEditMode -> toggleClipboardEditMode()
+            is KeyboardIntent.ClipboardItemSelected -> selectClipboardItem(intent.item)
+            is KeyboardIntent.ClipboardItemToggleSelect -> toggleClipboardItemSelection(intent.item)
+            is KeyboardIntent.DeleteSelectedClipboardItems -> deleteSelectedClipboardItems()
             is KeyboardIntent.VoiceToTextPressed -> startVoiceRecognition()
             is KeyboardIntent.PasteFromClipboard -> pasteFromClipboard()
         }
@@ -240,6 +257,7 @@ class KeyboardViewModel(
                         deleteCharAt(cursorPosition - 1)
                     }.toString()
                     cursorPosition--
+                    // For backspace, we'll handle it differently
                     onTextChangeListener?.invoke("BACKSPACE", cursorPosition)
                     textChanged = false
                 } else {
@@ -866,20 +884,20 @@ class KeyboardViewModel(
             val currentState = _uiState.value.keyboardState
             val currentText = currentState.currentText
             val cursorPosition = currentState.cursorPosition
-            
+
             val newText = StringBuilder(currentText).apply {
                 insert(cursorPosition, clipboardText)
             }.toString()
-            
+
             val newCursorPosition = cursorPosition + clipboardText.length
-            
+
             updateKeyboardState {
                 copy(
                     currentText = newText,
                     cursorPosition = newCursorPosition
                 )
             }
-            
+
             onTextChangeListener?.invoke(newText, newCursorPosition)
             onCursorChangeListener?.invoke(newCursorPosition)
             onKeyPressListener?.invoke()
@@ -891,4 +909,114 @@ class KeyboardViewModel(
         speechRecognizer?.destroy()
     }
 
+
+    fun toggleClipboardOpen() {
+        updateMode(KeyboardMode.CLIP_BOARD)
+    }
+
+
+    private fun observeClipboard() {
+        viewModelScope.launch {
+            combine(
+                getClipboardItemsUseCase(),
+                manageClipboardUseCase.isEnabled()
+            ) { items, isEnabled ->
+                _uiState.update { currentState ->
+                    currentState.copy(
+                        clipboardState = ClipboardState(
+                            items = items,
+                            isEnabled = isEnabled
+                        )
+                    )
+                }
+            }.collect()
+        }
+    }
+
+    fun addClipboardItem(text: String) {
+        val isEnabled = _uiState.value.clipboardState.isEnabled
+        if (isEnabled) {
+            manageClipboardUseCase.addItem(text)
+        }
+    }
+
+    private fun toggleClipboardEnabled() {
+        viewModelScope.launch {
+            val currentEnabled = _uiState.value.clipboardState.isEnabled
+            manageClipboardUseCase.setEnabled(!currentEnabled)
+        }
+    }
+
+    private fun toggleClipboardEditMode() {
+        _uiState.update { state ->
+            state.copy(
+                clipboardState = state.clipboardState.copy(
+                    isEditMode = !state.clipboardState.isEditMode,
+                    selectedItems = emptySet() // Clear selection when toggling edit mode
+                )
+            )
+        }
+    }
+
+    private fun selectClipboardItem(item: ClipboardItem) {
+        // Insert the clipboard item text into the current text
+        val currentText = _uiState.value.keyboardState.currentText
+        val newText = currentText + item.text
+        updateText(newText)
+        onKeyPressListener?.invoke()
+
+        // Add the selected text to clipboard for future use
+        viewModelScope.launch {
+            manageClipboardUseCase.addItem(item.text)
+        }
+    }
+
+    private fun toggleClipboardItemSelection(item: ClipboardItem) {
+        _uiState.update { state ->
+            val currentSelected = state.clipboardState.selectedItems
+            val newSelected = if (currentSelected.contains(item.id)) {
+                currentSelected - item.id
+            } else {
+                currentSelected + item.id
+            }
+
+            state.copy(
+                clipboardState = state.clipboardState.copy(
+                    selectedItems = newSelected
+                )
+            )
+        }
+    }
+
+    private fun deleteSelectedClipboardItems() {
+        viewModelScope.launch {
+            val selectedIds = _uiState.value.clipboardState.selectedItems.toList()
+            if (selectedIds.isNotEmpty()) {
+                manageClipboardUseCase.deleteItems(selectedIds)
+
+                // Clear selection and exit edit mode
+                _uiState.update { state ->
+                    state.copy(
+                        clipboardState = state.clipboardState.copy(
+                            isEditMode = false,
+                            selectedItems = emptySet()
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun updateText(text: String) {
+        _uiState.update { currentState ->
+            currentState.copy(
+                keyboardState = currentState.keyboardState.copy(currentText = text)
+            )
+        }
+        onTextChangeListener?.invoke(text, _uiState.value.keyboardState.cursorPosition)
+        textChangeChannel.trySend(text)
+    }
 }
+
+
+
