@@ -1,7 +1,7 @@
 package com.ai.keyboard.domain.model
 
 data class QuickReply(
-    val positive: String,
-    val neutral: String,
-    val negative: String
+    val positive: List<String>,
+    val neutral: List<String>,
+    val negative: List<String>
 )

@@ -2,6 +2,7 @@
     <string name="app_name">AI Powered Keyboard</string>
     <string name="accessibility_service_description">Accessibility service descreption here</string>
     <string name="fix_grammar">Fix Grammar</string>
+    <string name="quick_reply">Quick Reply</string>
     <string name="rephrase">Rephrase</string>
     <string name="word_tone">Word Tone</string>
 </resources>

@@ -191,43 +191,76 @@ fun translateSystemPrompt(): String {
         6. Output only the final rewritten text without commentary or formatting.
     """.trimIndent()
 }
+
 fun quickReplyPrompt(
     content: String,
     language: String
 ): String {
     return """
-    Create three natural message replies to the following message: "$content"
+    Generate a ${language.uppercase()} QuickReply object for the following message:
+    "$content"
+
+    The QuickReply data model has three fields:
+    - positive: List<String>
+    - neutral: List<String>
+    - negative: List<String>
 
     Requirements:
-    - Replies should sound like real human responses (e.g., chat or text message style).
-    - Each reply must represent a distinct tone:
-        1. Positive 😊
-        2. Neutral 😐
-        3. Negative 🙁
-    - Keep replies short, expressive, and natural — like how a person would actually respond.
-    - You may use emojis or casual expressions if they fit the tone naturally.
-    - Maintain the original context of the message.
-    - Avoid robotic or overly formal language.
-    - Output only the three replies labeled clearly as:
-        Positive:
-        Neutral:
-        Negative:
+    - Generate 3 natural human-like replies for each tone category.
+    - Replies should sound like real chat or text messages — casual, expressive, and context-aware.
+    - You may include emojis or natural expressions if appropriate.
+    - Keep replies short (1–2 sentences max).
+    - Maintain the message’s original intent and tone.
+    - Avoid robotic or overly formal phrasing.
+
+    Output format:
+    Positive:
+    - reply1
+    - reply2
+    - reply3
+
+    Neutral:
+    - reply1
+    - reply2
+    - reply3
+
+    Negative:
+    - reply1
+    - reply2
+    - reply3
 """.trimIndent()
 }
 
 fun quickReplySystemPrompt(): String {
     return """
-    You are an expert conversational response generator for social and casual communication.
+    You are a conversational AI specialized in generating realistic QuickReply suggestions.
 
-    Your responsibilities:
-    1. Create three natural message replies for the given content — one Positive, one Neutral, and one Negative.
-    2. Ensure each reply sounds authentic, like a real human response in a chat or conversation.
-    3. Use natural tone, expressions, and emojis where appropriate to match the mood.
-    4. Keep replies short, clear, and emotionally expressive — avoid robotic or overly formal phrasing.
-    5. Preserve the original message context and intent while varying the emotional tone.
-    6. Output only the three replies labeled clearly as:
+    Your task is to produce responses compatible with the QuickReply data model:
+    - positive: List<String>
+    - neutral: List<String>
+    - negative: List<String>
+
+    Guidelines:
+    1. Generate 3 short, natural-sounding replies for each category: Positive, Neutral, and Negative.
+    2. Replies should reflect realistic chat behavior — friendly, expressive, and human-like.
+    3. You may use emojis or casual phrasing to match tone and emotion.
+    4. Avoid formal, robotic, or repetitive language.
+    5. Ensure context preservation and emotional variation.
+    6. Format the output exactly as:
         Positive:
+        - reply1
+        - reply2
+        - reply3
+
         Neutral:
+        - reply1
+        - reply2
+        - reply3
+
         Negative:
+        - reply1
+        - reply2
+        - reply3
 """.trimIndent()
 }
+

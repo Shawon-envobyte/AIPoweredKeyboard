@@ -3,25 +3,24 @@ package com.ai.keyboard.presentation.screen.keyboard
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ai.keyboard.core.service.ServiceCallBack
 import com.ai.keyboard.core.service.ServiceDataPass
 import com.ai.keyboard.core.util.ResultWrapper
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
 import com.ai.keyboard.domain.model.KeyboardState
 import com.ai.keyboard.domain.model.KeyboardTheme
-import com.ai.keyboard.domain.model.QuickReply
 import com.ai.keyboard.domain.repository.SettingsRepository
 import com.ai.keyboard.domain.usecase.FixGrammarUseCase
 import com.ai.keyboard.domain.usecase.GetAiWritingAssistanceUseCase
 import com.ai.keyboard.domain.usecase.GetSuggestionsUseCase
-import com.ai.keyboard.domain.usecase.QuickReplyUseCase
 import com.ai.keyboard.domain.usecase.GetTranslateUseCase
 import com.ai.keyboard.domain.usecase.GetWordToneUseCase
+import com.ai.keyboard.domain.usecase.QuickReplyUseCase
 import com.ai.keyboard.domain.usecase.RephraseContentUseCase
 import com.ai.keyboard.presentation.model.AIWritingAssistanceType
 import com.ai.keyboard.presentation.model.ActionButtonType
 import com.ai.keyboard.presentation.model.LanguageType
+import com.ai.keyboard.presentation.model.QuickReplyModule
 import com.ai.keyboard.presentation.model.WordToneType
 import com.ai.keyboard.presentation.service.KeyboardBridge
 import kotlinx.coroutines.Dispatchers
@@ -41,9 +40,7 @@ class KeyboardViewModel(
     private val rephraseContentUseCase: RephraseContentUseCase,
     private val settingsRepository: SettingsRepository,
     private val fixGrammarUseCase: FixGrammarUseCase,
-    private val quickReplyUseCase: QuickReplyUseCase
-) : ViewModel(){
-    private val fixGrammarUseCase: FixGrammarUseCase,
+    private val quickReplyUseCase: QuickReplyUseCase,
     private val getWordToneUseCase: GetWordToneUseCase,
     private val getAiWritingAssistanceUseCase: GetAiWritingAssistanceUseCase,
     private val getTranslateUseCase: GetTranslateUseCase
@@ -160,7 +157,7 @@ class KeyboardViewModel(
             is KeyboardIntent.ToggleNumerRow -> toggleNumerRow()
             is KeyboardIntent.EmojiPressed -> toggleEmoji()
             is KeyboardIntent.FixGrammarPressed -> toggleFixGrammar()
-            is KeyboardIntent.GetQuickReply -> getQuickReply()
+            is KeyboardIntent.GetQuickReply -> toggleQuickReply()
             is KeyboardIntent.RewritePressed -> toggleRewrite()
             is KeyboardIntent.AiAssistancePressed -> toggleAiAssistance()
             is KeyboardIntent.TranslatePressed -> toggleTranslate()
@@ -358,17 +355,26 @@ class KeyboardViewModel(
     private fun toggleFixGrammar() {
         updateMode(KeyboardMode.FIX_GRAMMAR)
     }
+
     private fun toggleRewrite() {
         updateMode(KeyboardMode.REWRITE)
     }
+
     private fun toggleAiAssistance() {
         updateMode(KeyboardMode.AI_ASSISTANCE)
     }
+
     private fun toggleTranslate() {
         updateMode(KeyboardMode.TRANSLATE)
     }
+
     private fun updateMode(mode: KeyboardMode) {
         updateKeyboardState { copy(mode = mode) }
+    }
+
+    private fun toggleQuickReply() {
+        updateMode(KeyboardMode.QUICK_REPLY)
+        onSelectQuickReplyActionChange(QuickReplyModule.POSITIVE)
     }
 
     private fun fetchSuggestions(text: String) {
@@ -530,6 +536,7 @@ class KeyboardViewModel(
             }
         }
     }
+
     fun getTranslate() {
         val currentState = _uiState.value
         var currentText = currentState.inputFieldText
@@ -561,6 +568,7 @@ class KeyboardViewModel(
             }
         }
     }
+
     fun onLanguageSelected(language: LanguageType) {
         _uiState.value = _uiState.value.copy(
             language = language
@@ -573,32 +581,46 @@ class KeyboardViewModel(
         )
     }
 
-    fun getQuickReply() {
+    fun onSelectQuickReplyActionChange(action: QuickReplyModule) {
+        _uiState.value = _uiState.value.copy(
+            selectQuickReplyAction = action
+        )
         viewModelScope.launch {
-            try {
-                val quickReply = quickReplyUseCase(ServiceDataPass.lastMessage, "English")
-                Log.d("QuickReply", quickReply.toString() +" get: "+ServiceDataPass.lastMessage)
-            }catch (e: Exception) {
-                e.printStackTrace()
+            when (val result =
+                quickReplyUseCase(ServiceDataPass.lastMessage, uiState.value.language.name)) {
+                is ResultWrapper.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        quickReplyList = result.data
+                    )
+                }
+                is ResultWrapper.Failure -> {
+                    Log.e("QuickReplyModule", "QuickReply failed: ${result.message}")
+                }
+                else -> {
+                    Log.e("QuickReplyModule", "Unexpected Error")
+                }
             }
-
         }
-        Log.d("QuickReply",  " get: "+ServiceDataPass.lastMessage)
     }
 
-
-
+    fun changeQuickReplyMessageType(action: QuickReplyModule) {
+        _uiState.value = _uiState.value.copy(
+            selectQuickReplyAction = action
+        )
+    }
 
     fun onSelectedAiActionChange(action: AIWritingAssistanceType) {
         _uiState.value = _uiState.value.copy(
             selectedAiAction = action
         )
     }
+
     fun onSelectedWordActionChange(action: WordToneType) {
         _uiState.value = _uiState.value.copy(
             selectedWordAction = action
         )
     }
+
     fun replaceCurrentInputWith(newText: String) {
         KeyboardBridge.ime?.replaceInputFieldText(newText)
     }

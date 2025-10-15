@@ -53,6 +53,6 @@ interface AIRepository {
     suspend fun quickReply(
         content: String,
         language: String,
-    ): ResultWrapper<List<QuickReply>>
+    ): ResultWrapper<QuickReply>
 
 }

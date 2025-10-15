@@ -6,7 +6,7 @@ import org.koin.dsl.module
 
 val viewModelModule = module {
     viewModel {
-        KeyboardViewModel(get(), get(), get(), get(),get ())
-        KeyboardViewModel(get(), get(), get(), get(), get(), get(), get())
+        KeyboardViewModel(get(), get(), get(), get(), get(), get(), get(), get())
+        KeyboardViewModel(get(), get(), get(), get(), get(), get(), get(), get())
     }
 }

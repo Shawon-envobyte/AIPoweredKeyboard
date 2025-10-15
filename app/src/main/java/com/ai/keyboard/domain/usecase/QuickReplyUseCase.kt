@@ -7,8 +7,14 @@ import com.ai.keyboard.domain.repository.AIRepository
 class QuickReplyUseCase(
     private val aiRepository: AIRepository
 ) {
-    suspend operator fun invoke(text: String, language: String): ResultWrapper<List<QuickReply>> {
-        if (text.isEmpty()) return ResultWrapper.Success(emptyList())
+    suspend operator fun invoke(text: String, language: String): ResultWrapper<QuickReply> {
+        if (text.isEmpty()) return ResultWrapper.Success(
+            QuickReply(
+                emptyList(),
+                emptyList(),
+                emptyList()
+            )
+        )
         return aiRepository.quickReply(text, language)
     }
 }

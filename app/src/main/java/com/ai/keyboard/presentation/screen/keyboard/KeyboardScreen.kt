@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -24,6 +24,7 @@ import com.ai.keyboard.presentation.keyboard.ExtendedSymbolKeyboard
 import com.ai.keyboard.presentation.keyboard.SymbolKeyboard
 import com.ai.keyboard.presentation.screen.ai_assistance.AIWritingAssistanceScreen
 import com.ai.keyboard.presentation.screen.fix_grammar.FixGrammarScreen
+import com.ai.keyboard.presentation.screen.quick_reply.QuickReplyScreen
 import com.ai.keyboard.presentation.screen.translate.TranslateScreen
 import com.ai.keyboard.presentation.screen.word_tone.WordToneScreen
 import com.ai.keyboard.presentation.theme.AIKeyboardTheme
@@ -110,6 +111,7 @@ fun KeyboardScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
+
                 KeyboardMode.FIX_GRAMMAR -> {
                     FixGrammarScreen(
                         uiState = uiState,
@@ -124,6 +126,7 @@ fun KeyboardScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
+
                 KeyboardMode.REWRITE -> {
                     WordToneScreen(
                         uiState = uiState,
@@ -131,6 +134,7 @@ fun KeyboardScreen(
                         onBackButtonClick = { viewModel.handleIntent(KeyboardIntent.AlphabetPressed) },
                     )
                 }
+
                 KeyboardMode.AI_ASSISTANCE -> {
                     AIWritingAssistanceScreen(
                         uiState = uiState,
@@ -138,6 +142,7 @@ fun KeyboardScreen(
                         onBackButtonClick = { viewModel.handleIntent(KeyboardIntent.AlphabetPressed) },
                     )
                 }
+
                 KeyboardMode.TRANSLATE -> {
                     TranslateScreen(
                         uiState = uiState,
@@ -145,6 +150,15 @@ fun KeyboardScreen(
                         onBackButtonClick = { viewModel.handleIntent(KeyboardIntent.AlphabetPressed) },
                     )
                 }
+
+                KeyboardMode.QUICK_REPLY -> {
+                    QuickReplyScreen(
+                        uiState = uiState,
+                        viewModel = viewModel,
+                        onBackButtonClick = { viewModel.handleIntent(KeyboardIntent.AlphabetPressed) },
+                    )
+                }
+
                 else -> {
                     AlphabeticKeyboard(
                         mode = keyboardMode,
