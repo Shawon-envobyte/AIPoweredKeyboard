@@ -1,12 +1,21 @@
 package com.ai.keyboard.presentation
 
+import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -45,9 +54,33 @@ import com.ai.keyboard.presentation.theme.AIKeyboardTheme
 import org.koin.androidx.compose.koinViewModel
 
 class MainActivity : ComponentActivity() {
+    
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        // Permission result is handled automatically by the system
+        // The keyboard will check permission status when needed
+    }
+    
+    private val permissionRequestReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == "com.ai.keyboard.REQUEST_AUDIO_PERMISSION") {
+                requestAudioPermission()
+            }
+        }
+    }
+    
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Register broadcast receiver
+        registerReceiver(
+            permissionRequestReceiver,
+            IntentFilter("com.ai.keyboard.REQUEST_AUDIO_PERMISSION"),
+            Context.RECEIVER_NOT_EXPORTED
+        )
         setContent {
             AIKeyboardTheme {
                 Surface(
@@ -61,11 +94,34 @@ class MainActivity : ComponentActivity() {
                         onSelectKeyboard = {
                             (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager)
                                 .showInputMethodPicker()
+                        },
+                        onRequestAudioPermission = {
+                            requestAudioPermission()
                         }
                     )
                 }
             }
         }
+    }
+    
+    private fun requestAudioPermission() {
+        when {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                // Permission already granted
+            }
+            else -> {
+                // Request permission
+                requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+            }
+        }
+    }
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(permissionRequestReceiver)
     }
 }
 
@@ -74,6 +130,7 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(
     onEnableKeyboard: () -> Unit,
     onSelectKeyboard: () -> Unit,
+    onRequestAudioPermission: () -> Unit,
     viewModel: KeyboardViewModel = koinViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -160,7 +217,8 @@ fun MainScreen(
                     },
                     onToggleNumberRow = {
                         viewModel.handleIntent(KeyboardIntent.ToggleNumerRow)
-                    }
+                    },
+                    onRequestAudioPermission = onRequestAudioPermission
                 )
             }
         }

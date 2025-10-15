@@ -25,5 +25,8 @@ data class KeyboardUIState(
     val selectedAiAction: AIWritingAssistanceType = AIWritingAssistanceType.CHATGPT,
     val selectedWordAction: WordToneType = WordToneType.REWRITE,
     val selectQuickReplyAction: QuickReplyModule = QuickReplyModule.POSITIVE,
-    val inputFieldText: String = ""
+    val inputFieldText: String = "",
+    val isListening: Boolean = false,
+    val voiceToTextResult: String = "",
+    val needsAudioPermission: Boolean = false
 )

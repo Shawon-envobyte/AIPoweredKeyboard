@@ -79,7 +79,10 @@ fun KeyboardScreen(
                 onClipboardClick = { viewModel.handleIntent(KeyboardIntent.AiAssistancePressed) },
                 onEmojiClick = { viewModel.handleIntent(KeyboardIntent.EmojiPressed) },
                 onDotClick = {},
-                onMicClick = {}
+                onMicClick = { 
+                    viewModel.handleIntent(KeyboardIntent.VoiceToTextPressed)
+                },
+                isListening = uiState.isListening
             )
             Spacer(modifier = Modifier.height(4.dp))
             // Suggestion Bar - only recompose when suggestions change

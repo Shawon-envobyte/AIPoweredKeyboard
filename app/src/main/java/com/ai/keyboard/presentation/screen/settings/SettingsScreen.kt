@@ -20,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material3.Button
@@ -48,7 +49,8 @@ fun SettingsScreen(
     isNumberRowEnabled: Boolean,
     onToggleHaptic: () -> Unit,
     onToggleSound: () -> Unit,
-    onToggleNumberRow: () -> Unit
+    onToggleNumberRow: () -> Unit,
+    onRequestAudioPermission: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -101,6 +103,60 @@ fun SettingsScreen(
             checked = isNumberRowEnabled,
             onCheckedChange = { onToggleNumberRow() }
         )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Permissions Section
+        Text(
+            text = "Permissions",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = "Microphone Permission",
+                    modifier = Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "Microphone Permission",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "Required for voice-to-text functionality",
+                        fontSize = 14.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Button(
+                    onClick = onRequestAudioPermission
+                ) {
+                    Text("Grant")
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(32.dp))
 

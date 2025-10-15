@@ -24,7 +24,8 @@ fun OptionBar(
     onClipboardClick: () -> Unit,
     onEmojiClick: () -> Unit,
     onDotClick: () -> Unit,
-    onMicClick: () -> Unit
+    onMicClick: () -> Unit,
+    isListening: Boolean = false
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -38,7 +39,7 @@ fun OptionBar(
         OptionBarButtonIcon(onClick = onClipboardClick, icon = R.drawable.ic_clipboard)
         OptionBarButtonIcon(onClick = onEmojiClick, icon = R.drawable.ic_emoji)
         OptionBarButtonIcon(onClick = onDotClick, icon = R.drawable.ic_dot)
-        OptionBarButtonIcon(onClick = onMicClick, icon = R.drawable.ic_mic)
+        OptionBarButtonIcon(onClick = onMicClick, icon = R.drawable.ic_mic, isActive = isListening)
     }
 
 
@@ -46,7 +47,7 @@ fun OptionBar(
 
 
 @Composable
-fun OptionBarButtonIcon(onClick: () -> Unit, icon: Int) {
+fun OptionBarButtonIcon(onClick: () -> Unit, icon: Int, isActive: Boolean = false) {
     Box(
         modifier = Modifier
             .size(36.dp)
@@ -56,7 +57,8 @@ fun OptionBarButtonIcon(onClick: () -> Unit, icon: Int) {
         Image(
             painter = painterResource(id = icon),
             contentDescription = null,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            alpha = if (isActive) 0.5f else 1.0f
         )
     }
 }

@@ -84,12 +84,22 @@ fun AlphabeticKeyboard(
             Spacer(modifier = Modifier.width(3.dp))
 
             listOf("z", "x", "c", "v", "b", "n", "m").forEach { char ->
-                KeyButton(
-                    text = char,
-                    onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(char))) },
-                    mode = mode,
-                    modifier = Modifier.weight(1f)
-                )
+                if (char == "v") {
+                    KeyButton(
+                        text = char,
+                        onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(char))) },
+                        onLongPress = { _ -> onIntent(KeyboardIntent.KeyPressed(KeyAction.Paste)) },
+                        mode = mode,
+                        modifier = Modifier.weight(1f)
+                    )
+                } else {
+                    KeyButton(
+                        text = char,
+                        onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(char))) },
+                        mode = mode,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.width(3.dp))
