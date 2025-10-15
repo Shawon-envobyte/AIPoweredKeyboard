@@ -21,4 +21,5 @@ sealed class KeyboardIntent {
     object RewritePressed : KeyboardIntent()
     object AiAssistancePressed : KeyboardIntent()
     object TranslatePressed : KeyboardIntent()
+    object VoiceToTextPressed : KeyboardIntent()
 }
