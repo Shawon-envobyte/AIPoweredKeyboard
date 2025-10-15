@@ -377,14 +377,7 @@ class KeyboardViewModel(
         val finalText = "$textWithoutLastWord$suggestion "
         println("finalText: $finalText")
 
-        val charsToDelete = trimmedText.length - (lastSpaceIndex + 1).coerceAtLeast(0)
-        if (charsToDelete > 0) {
-            onTextSelectAndDeleteListener?.invoke(charsToDelete)
-        }
-
-        onTextChangeListener?.invoke("$suggestion ", textWithoutLastWord.length + suggestion.length + 1)
-        onKeyPressListener?.invoke()
-        textChangeChannel.trySend(finalText)
+        replaceCurrentInputWith(finalText)
 
         updateKeyboardState {
             copy(
