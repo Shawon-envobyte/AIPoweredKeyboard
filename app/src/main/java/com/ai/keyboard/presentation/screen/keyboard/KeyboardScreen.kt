@@ -41,7 +41,6 @@ fun KeyboardScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Optimize recomposition
     val keyboardMode by remember {
         derivedStateOf { uiState.keyboardState.mode }
     }
@@ -52,6 +51,10 @@ fun KeyboardScreen(
 
     val isNumberRowEnabled by remember {
         derivedStateOf { uiState.keyboardState.isNumberRowEnabled }
+    }
+
+    val imeAction by remember {
+        derivedStateOf { uiState.keyboardState.imeAction }
     }
 
     LaunchedEffect(Unit) {
@@ -69,8 +72,6 @@ fun KeyboardScreen(
                 .padding(vertical = 4.dp, horizontal = 6.dp)
                 .navigationBarsPadding()
         ) {
-            // Suggestion Bar
-
             OptionBar(
                 onGrammarClick = { viewModel.handleIntent(KeyboardIntent.FixGrammarPressed) },
                 onMagicClick = { viewModel.handleIntent(KeyboardIntent.RewritePressed) },
@@ -82,7 +83,6 @@ fun KeyboardScreen(
                 onMicClick = {}
             )
             Spacer(modifier = Modifier.height(4.dp))
-            // Suggestion Bar - only recompose when suggestions change
             SuggestionBar(
                 suggestions = suggestions,
                 onSuggestionClick = { suggestion ->
@@ -98,7 +98,6 @@ fun KeyboardScreen(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Keyboard Layout
             when (keyboardMode) {
                 KeyboardMode.SYMBOLS -> {
                     SymbolKeyboard(
@@ -166,7 +165,8 @@ fun KeyboardScreen(
                         mode = keyboardMode,
                         isNumberRowEnabled = isNumberRowEnabled,
                         onIntent = { viewModel.handleIntent(it) },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        imeAction = imeAction
                     )
                 }
             }

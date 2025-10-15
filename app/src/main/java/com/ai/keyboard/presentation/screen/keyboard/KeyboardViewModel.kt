@@ -1,6 +1,7 @@
 package com.ai.keyboard.presentation.screen.keyboard
 
 import android.util.Log
+import android.view.inputmethod.EditorInfo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ai.keyboard.core.service.ServiceDataPass
@@ -55,6 +56,7 @@ class KeyboardViewModel(
     private var onCursorChangeListener: ((Int) -> Unit)? = null
     private var onTextSelectAndDeleteListener: ((Int) -> Unit)? = null
     private var onKeyPressListener: (() -> Unit)? = null
+    private var onImeActionListener: ((Int) -> Unit)? = null
 
     init {
         observeSettings()
@@ -142,6 +144,14 @@ class KeyboardViewModel(
         onKeyPressListener = listener
     }
 
+    fun setOnImeActionListener(listener: (Int) -> Unit) {
+        onImeActionListener = listener
+    }
+
+    fun setImeAction(imeAction: Int) {
+        updateKeyboardState { copy(imeAction = imeAction) }
+    }
+
     fun handleIntent(intent: KeyboardIntent) {
         when (intent) {
             is KeyboardIntent.KeyPressed -> handleKeyPress(intent.action)
@@ -191,20 +201,22 @@ class KeyboardViewModel(
                         deleteCharAt(cursorPosition - 1)
                     }.toString()
                     cursorPosition--
-                    // For backspace, we'll handle it differently
                     onTextChangeListener?.invoke("BACKSPACE", cursorPosition)
-                    textChanged = false // Don't trigger normal flow
+                    textChanged = false
                 } else {
                     textChanged = false
                 }
             }
 
             is KeyAction.Enter -> {
-                currentText = StringBuilder(currentText).apply {
-                    insert(cursorPosition, "")
-                }.toString()
-                cursorPosition += 1
-                characterToCommit = ""
+                characterToCommit = "\n"
+                currentText = StringBuilder(currentText).insert(cursorPosition, characterToCommit).toString()
+                cursorPosition += characterToCommit.length
+            }
+
+            is KeyAction.ImeAction -> {
+                onImeActionListener?.invoke(action.action)
+                textChanged = false
             }
 
             is KeyAction.Space -> {
@@ -245,17 +257,14 @@ class KeyboardViewModel(
         }
 
         if (textChanged && characterToCommit.isNotEmpty()) {
-            // Send only the character to commit, not the full text
             onTextChangeListener?.invoke(characterToCommit, cursorPosition)
             textChangeChannel.trySend(currentText)
-
         } else if (!textChanged && action !is KeyAction.Backspace) {
             onCursorChangeListener?.invoke(cursorPosition)
         }
 
         onKeyPressListener?.invoke()
 
-        // Auto-shift after character
         if (currentState.mode == KeyboardMode.UPPERCASE && action is KeyAction.Character) {
             updateMode(KeyboardMode.LOWERCASE)
         }
@@ -273,13 +282,10 @@ class KeyboardViewModel(
 
         println("current: $currentText")
 
-        // Trim trailing spaces
         val trimmedText = currentText.trimEnd()
 
-        // Find last space (to isolate last word)
         val lastSpaceIndex = trimmedText.lastIndexOf(' ')
 
-        // Text before the last word
         val textWithoutLastWord = if (lastSpaceIndex != -1) {
             trimmedText.substring(0, lastSpaceIndex + 1)
         } else {

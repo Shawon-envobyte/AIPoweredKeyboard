@@ -12,4 +12,5 @@ sealed class KeyAction {
     data class MoveCursor(val amount: Int) : KeyAction()
     data class SelectAndDelete(val amount: Int) : KeyAction()
     data class InsertSuggestion(val text: String) : KeyAction()
+    data class ImeAction(val action: Int) : KeyAction()
 }

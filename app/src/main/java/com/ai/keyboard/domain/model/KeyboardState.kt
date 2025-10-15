@@ -1,5 +1,7 @@
 package com.ai.keyboard.domain.model
 
+import android.view.inputmethod.EditorInfo
+
 data class KeyboardState(
     val currentText: String = "",
     val cursorPosition: Int = 0,
@@ -10,5 +12,6 @@ data class KeyboardState(
     val theme: KeyboardTheme = KeyboardTheme.Light,
     val isHapticEnabled: Boolean = true,
     val isSoundEnabled: Boolean = true,
-    val isNumberRowEnabled: Boolean = false
+    val isNumberRowEnabled: Boolean = false,
+    val imeAction: Int = EditorInfo.IME_ACTION_NONE
 )

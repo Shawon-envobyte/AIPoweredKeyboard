@@ -1,5 +1,6 @@
 package com.ai.keyboard.presentation.keyboard
 
+import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.ai.keyboard.domain.model.KeyAction
 import com.ai.keyboard.domain.model.KeyboardMode
 import com.ai.keyboard.presentation.components.BackspaceKey
+import com.ai.keyboard.presentation.components.ImeKey
 import com.ai.keyboard.presentation.components.KeyButton
 import com.ai.keyboard.presentation.components.KeyRow
 import com.ai.keyboard.presentation.components.SpaceKey
@@ -25,7 +27,8 @@ fun AlphabeticKeyboard(
     mode: KeyboardMode,
     isNumberRowEnabled: Boolean,
     onIntent: (KeyboardIntent) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    imeAction: Int
 ) {
     Column(
         modifier = modifier
@@ -33,29 +36,26 @@ fun AlphabeticKeyboard(
             .graphicsLayer { clip = false },
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        // Optional Number Row
         if (isNumberRowEnabled) {
             KeyRow(
-                keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", "0"),
+                keys = numberRowKeys,
                 onIntent = onIntent,
                 mode = mode
             )
         }
 
-        // First row: Q W E R T Y U I O P
         KeyRow(
-            keys = listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p"),
+            keys = lowerCaseKeys[0],
             onIntent = onIntent,
             mode = mode
         )
 
-        // Second row: A S D F G H J K L
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
         ) {
-            listOf("a", "s", "d", "f", "g", "h", "j", "k", "l").forEach { char ->
+            lowerCaseKeys[1].forEach { char ->
                 KeyButton(
                     text = char,
                     onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(char))) },
@@ -68,11 +68,9 @@ fun AlphabeticKeyboard(
             }
         }
 
-        // Third row: Shift Z X C V B N M Backspace
         Row(
             modifier = Modifier.fillMaxWidth()
         ) {
-            // Shift key
             SpecialKeyButton(
                 icon = when (mode) {
                     KeyboardMode.CAPS_LOCK -> "⇪"
@@ -86,7 +84,7 @@ fun AlphabeticKeyboard(
 
             Spacer(modifier = Modifier.width(3.dp))
 
-            listOf("z", "x", "c", "v", "b", "n", "m").forEach { char ->
+            lowerCaseKeys[2].forEach { char ->
                 KeyButton(
                     text = char,
                     onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(char))) },
@@ -97,7 +95,6 @@ fun AlphabeticKeyboard(
 
             Spacer(modifier = Modifier.width(3.dp))
 
-            // Backspace key
             BackspaceKey(
                 modifier = Modifier.weight(1.5f),
                 text = "⌫",
@@ -113,7 +110,6 @@ fun AlphabeticKeyboard(
             )
         }
 
-        // Fourth row: 123 , Space . Enter
         Row(
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -133,7 +129,6 @@ fun AlphabeticKeyboard(
             )
 
             Spacer(modifier = Modifier.width(3.dp))
-
 
             SpaceKey(
                 modifier = Modifier.weight(4f),
@@ -155,11 +150,19 @@ fun AlphabeticKeyboard(
 
             Spacer(modifier = Modifier.width(3.dp))
 
-            SpecialKeyButton(
-                icon = "⏎",
-                onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Enter)) },
-                modifier = Modifier.weight(1.5f)
-            )
+            if (imeAction != EditorInfo.IME_ACTION_NONE && imeAction != EditorInfo.IME_ACTION_UNSPECIFIED) {
+                ImeKey(
+                    action = imeAction,
+                    onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.ImeAction(imeAction))) },
+                    modifier = Modifier.weight(1.5f)
+                )
+            } else {
+                SpecialKeyButton(
+                    icon = "⏎",
+                    onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Enter)) },
+                    modifier = Modifier.weight(1.5f)
+                )
+            }
         }
     }
 }
@@ -170,10 +173,4 @@ private val lowerCaseKeys = listOf(
     listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p"),
     listOf("a", "s", "d", "f", "g", "h", "j", "k", "l"),
     listOf("z", "x", "c", "v", "b", "n", "m")
-)
-
-private val upperCaseKeys = listOf(
-    listOf("Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"),
-    listOf("A", "S", "D", "F", "G", "H", "J", "K", "L"),
-    listOf("Z", "X", "C", "V", "B", "N", "M")
 )
