@@ -201,6 +201,7 @@ class KeyboardViewModel(
             is KeyboardIntent.CursorPositionChanged -> updateCursorPosition(intent.position)
             is KeyboardIntent.ToggleNumerRow -> toggleNumerRow()
             is KeyboardIntent.EmojiPressed -> toggleEmoji()
+            is KeyboardIntent.GifPressed -> toggleGif()
             is KeyboardIntent.FixGrammarPressed -> toggleFixGrammar()
             is KeyboardIntent.GetQuickReply -> toggleQuickReply()
             is KeyboardIntent.RewritePressed -> toggleRewrite()
@@ -451,6 +452,15 @@ class KeyboardViewModel(
         updateMode(newMode)
     }
 
+    private fun toggleGif() {
+        val currentMode = _uiState.value.keyboardState.mode
+        val newMode = if (currentMode == KeyboardMode.GIF) {
+            KeyboardMode.LOWERCASE
+        } else {
+            KeyboardMode.GIF
+        }
+        updateMode(newMode)
+    }
 
     private fun toggleExtendedSymbol() {
         val currentMode = _uiState.value.keyboardState.mode
@@ -624,7 +634,7 @@ class KeyboardViewModel(
             val result = getAiWritingAssistanceUseCase(
                 content = currentText,
                 language = _uiState.value.language.name,
-                action = _uiState.value.selectedAction.name
+                action = _uiState.value.selectedAiAction.name
             )
 
             when (result) {

@@ -33,10 +33,20 @@ android {
         val apiKey = properties.getProperty("API_KEY")
             ?: throw GradleException("Add 'API_KEY' field in the local.properties file.")
 
+        val tenorApiKey = properties.getProperty("TENOR_API_KEY")
+            ?: throw GradleException("Add 'TENOR_API_KEY' field in the local.properties file.")
+
+
         buildConfigField(
             "String",
             "API_KEY",
             "\"" + apiKey + "\""
+        )
+
+        buildConfigField(
+            "String",
+            "TENOR_API_KEY",
+            "\"" + tenorApiKey + "\""
         )
     }
 
@@ -81,6 +91,10 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+
+    // Coil
+    implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
 
     // Material icon extended
     implementation(libs.material.icons.extended)

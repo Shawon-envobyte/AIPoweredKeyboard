@@ -13,5 +13,6 @@ enum class KeyboardMode {
     AI_ASSISTANCE,
     TRANSLATE,
     QUICK_REPLY,
-    CLIP_BOARD
+    CLIP_BOARD,
+    GIF
 }

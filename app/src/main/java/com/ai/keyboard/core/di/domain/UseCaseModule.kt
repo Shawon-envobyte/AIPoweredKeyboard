@@ -4,13 +4,16 @@ import com.ai.keyboard.domain.usecase.CorrectGrammarUseCase
 import com.ai.keyboard.domain.usecase.FixGrammarUseCase
 import com.ai.keyboard.domain.usecase.GetAiWritingAssistanceUseCase
 import com.ai.keyboard.domain.usecase.GetClipboardItemsUseCase
+import com.ai.keyboard.domain.usecase.GetGIFCategoriesUseCase
 import com.ai.keyboard.domain.usecase.GetSuggestionsUseCase
 import com.ai.keyboard.domain.usecase.GetTranslateUseCase
+import com.ai.keyboard.domain.usecase.GetTrendingGifsUseCase
 import com.ai.keyboard.domain.usecase.GetWordToneUseCase
 import com.ai.keyboard.domain.usecase.ManageClipboardUseCase
 import com.ai.keyboard.domain.usecase.PredictNextWordUseCase
 import com.ai.keyboard.domain.usecase.QuickReplyUseCase
 import com.ai.keyboard.domain.usecase.RephraseContentUseCase
+import com.ai.keyboard.domain.usecase.SearchGifsUseCase
 import org.koin.dsl.module
 
 val useCaseModule = module {
@@ -25,5 +28,8 @@ val useCaseModule = module {
     factory { GetTranslateUseCase(get()) }
     factory { ManageClipboardUseCase(get()) }
     factory { GetClipboardItemsUseCase(get()) }
+    factory { GetTrendingGifsUseCase(get()) }
+    factory { SearchGifsUseCase(get()) }
+    factory { GetGIFCategoriesUseCase(get()) }
 
 }

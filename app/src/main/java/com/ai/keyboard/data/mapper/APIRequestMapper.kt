@@ -2,9 +2,9 @@ package com.ai.keyboard.data.mapper
 
 
 import com.ai.keyboard.domain.model.QuickReply
-import com.hashtag.generator.ai.post.writer.data.model.APIRequest
-import com.hashtag.generator.ai.post.writer.data.model.Content
-import com.hashtag.generator.ai.post.writer.data.model.Part
+import com.ai.keyboard.data.model.APIRequest
+import com.ai.keyboard.data.model.Content
+import com.ai.keyboard.data.model.Part
 
 fun String.toAPIRequest(systemInstruction: String? = null): APIRequest {
     return APIRequest(

@@ -1,7 +1,7 @@
 package com.ai.keyboard.data.source.remote.api
 
-import com.hashtag.generator.ai.post.writer.data.model.APIRequest
-import com.hashtag.generator.ai.post.writer.data.model.APIResponse
+import com.ai.keyboard.data.model.APIRequest
+import com.ai.keyboard.data.model.APIResponse
 
 interface APIDataSource {
 
