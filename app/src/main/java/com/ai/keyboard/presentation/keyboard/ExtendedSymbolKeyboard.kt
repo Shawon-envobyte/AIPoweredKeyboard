@@ -52,6 +52,7 @@ fun ExtendedSymbolKeyboard(
                     text = char,
                     onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(char))) },
                     mode = KeyboardMode.EXTENDED_SYMBOLS,
+                    isGestureTypingActive = false, // Extended symbol keyboard doesn't support gesture typing
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -78,6 +79,7 @@ fun ExtendedSymbolKeyboard(
                 text = "*",
                 onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character("*"))) },
                 mode = KeyboardMode.EXTENDED_SYMBOLS,
+                isGestureTypingActive = false, // Extended symbol keyboard doesn't support gesture typing
                 modifier = Modifier.weight(1f)
             )
 
@@ -86,6 +88,7 @@ fun ExtendedSymbolKeyboard(
                 displayText = "Space",
                 onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Space)) },
                 mode = KeyboardMode.EXTENDED_SYMBOLS,
+                isGestureTypingActive = false, // Extended symbol keyboard doesn't support gesture typing
                 modifier = Modifier.weight(4f)
             )
 
@@ -93,6 +96,7 @@ fun ExtendedSymbolKeyboard(
                 text = "+",
                 onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character("+"))) },
                 mode = KeyboardMode.EXTENDED_SYMBOLS,
+                isGestureTypingActive = false, // Extended symbol keyboard doesn't support gesture typing
                 modifier = Modifier.weight(1f)
             )
 

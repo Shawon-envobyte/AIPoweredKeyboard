@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.ai.keyboard.domain.model.KeyboardMode
 import com.ai.keyboard.presentation.components.OptionBar
 import com.ai.keyboard.presentation.components.SuggestionBar
+import com.ai.keyboard.presentation.components.GlideTypingPredictions
 import com.ai.keyboard.presentation.keyboard.AlphabeticKeyboard
 import com.ai.keyboard.presentation.keyboard.EmojiKeyboard
 import com.ai.keyboard.presentation.keyboard.ExtendedSymbolKeyboard
@@ -112,6 +113,24 @@ fun KeyboardScreen(
             }
 
             Spacer(modifier = Modifier.height(4.dp))
+            
+            // Show glide typing predictions when active
+            if (uiState.keyboardState.glideTypingState.isActive && 
+                uiState.keyboardState.glideTypingState.predictions.isNotEmpty()) {
+                GlideTypingPredictions(
+                    predictions = uiState.keyboardState.glideTypingState.predictions,
+                    onPredictionSelected = { prediction ->
+                        viewModel.handleIntent(
+                            KeyboardIntent.GlideTypingPredictionSelected(prediction)
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+            }
 
             when (keyboardMode) {
                 KeyboardMode.SYMBOLS -> {
@@ -214,7 +233,8 @@ fun KeyboardScreen(
                         isNumberRowEnabled = isNumberRowEnabled,
                         onIntent = { viewModel.handleIntent(it) },
                         modifier = Modifier.fillMaxWidth(),
-                        imeAction = imeAction
+                        imeAction = imeAction,
+                        uiState = uiState
                     )
                 }
             }

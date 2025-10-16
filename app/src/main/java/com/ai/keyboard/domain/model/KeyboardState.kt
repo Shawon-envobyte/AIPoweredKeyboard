@@ -13,5 +13,6 @@ data class KeyboardState(
     val isHapticEnabled: Boolean = true,
     val isSoundEnabled: Boolean = true,
     val isNumberRowEnabled: Boolean = false,
-    val imeAction: Int = EditorInfo.IME_ACTION_NONE
+    val imeAction: Int = EditorInfo.IME_ACTION_NONE,
+    val glideTypingState: GlideTypingState = GlideTypingState()
 )

@@ -1,5 +1,6 @@
 package com.ai.keyboard.presentation.components
 
+import android.util.Log
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -49,6 +50,9 @@ fun KeyButton(
     modifier: Modifier = Modifier,
     displayText: String = text,
     onLongPress: ((String) -> Unit)? = null,
+    isHighlighted: Boolean = false, // For glide typing highlighting
+    isCurrentKey: Boolean = false, // For current key under gesture
+    isGestureTypingActive: Boolean = false, // Disable long press during gesture typing
 ) {
     // Memoize display character
     val displayChar = remember(displayText, text, mode) {
@@ -78,9 +82,24 @@ fun KeyButton(
     )
 
     val background by animateColorAsState(
-        targetValue = if (isPressed) AIKeyboardTheme.colors.keyBackground else AIKeyboardTheme.colors.keyBackground,
-        animationSpec = tween(durationMillis = 50),
+        targetValue = when {
+            isCurrentKey -> AIKeyboardTheme.colors.keyBackground.copy(alpha = 0.9f) // Current key under gesture
+            isHighlighted -> AIKeyboardTheme.colors.keyBackground.copy(alpha = 0.7f) // Highlighted by gesture path
+            isPressed -> AIKeyboardTheme.colors.keyBackground
+            else -> AIKeyboardTheme.colors.keyBackground
+        },
+        animationSpec = tween(durationMillis = 100),
         label = "keyBackground"
+    )
+
+    val textColor by animateColorAsState(
+        targetValue = when {
+            isCurrentKey -> AIKeyboardTheme.colors.keyText.copy(alpha = 1f)
+            isHighlighted -> AIKeyboardTheme.colors.keyText.copy(alpha = 0.8f)
+            else -> AIKeyboardTheme.colors.keyText
+        },
+        animationSpec = tween(durationMillis = 100),
+        label = "keyTextColor"
     )
 
     Box(
@@ -116,19 +135,23 @@ fun KeyButton(
                                     isPressed = true
                                     tooltipCounter++
                                     showTooltip = true
-
+                                    Log.d("KeyButton", "gestures: $isGestureTypingActive")
                                     // Start long press timer
-                                    if (hasLongPressOptions) {
+                                    if (hasLongPressOptions && !isGestureTypingActive) {
+                                        Log.d("KeyButton", "KeyButton: long press started")
                                         longPressJob = coroutineScope.launch {
-                                            delay(300)
-                                            isLongPressTriggered = true
-                                            showTooltip = false
+                                            delay(1000)
+                                            // Double-check that gesture typing hasn't started during the delay
+                                            if (!isGestureTypingActive) {
+                                                isLongPressTriggered = true
+                                                showTooltip = false
 
-                                            // Special case for 'v' key - direct paste without popup
-                                            if (text == "v") {
-                                                onLongPress?.invoke("v")
-                                            } else {
-                                                showPopup = true
+                                                // Special case for 'v' key - direct paste without popup
+                                                if (text == "v") {
+                                                    onLongPress?.invoke("v")
+                                                } else {
+                                                    showPopup = true
+                                                }
                                             }
                                         }
                                     }
@@ -166,7 +189,7 @@ fun KeyButton(
             Box(contentAlignment = Alignment.Center) {
                 Text(
                     text = displayChar,
-                    color = AIKeyboardTheme.colors.keyText,
+                    color = textColor,
                     fontSize = 22.sp
                 )
             }

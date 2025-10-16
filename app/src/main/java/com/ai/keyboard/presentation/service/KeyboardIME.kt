@@ -125,6 +125,13 @@ class KeyboardIME : InputMethodService(),
             }
         }
         viewModel.setOnImeActionListener(::onImeAction)
+        viewModel.setOnGestureFeedbackListener {
+            val uiState = viewModel.uiState.value
+            performFeedback(
+                hapticEnabled = uiState.keyboardState.isHapticEnabled,
+                soundEnabled = uiState.keyboardState.isSoundEnabled
+            )
+        }
         return composeView!!
     }
 

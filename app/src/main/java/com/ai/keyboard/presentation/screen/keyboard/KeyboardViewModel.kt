@@ -39,6 +39,10 @@ import com.ai.keyboard.presentation.model.LanguageType
 import com.ai.keyboard.presentation.model.QuickReplyModule
 import com.ai.keyboard.presentation.model.WordToneType
 import com.ai.keyboard.presentation.service.KeyboardBridge
+import com.ai.keyboard.core.util.GestureDetector
+import com.ai.keyboard.core.util.WordPredictor
+import com.ai.keyboard.domain.model.GesturePoint
+import com.ai.keyboard.domain.model.GlideTypingState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
@@ -51,6 +55,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -88,10 +93,25 @@ class KeyboardViewModel(
     private val undoStack = mutableListOf<TextHistory>()
     private val redoStack = mutableListOf<TextHistory>()
 
+    // Glide typing components
+    private val gestureDetector = GestureDetector()
+    private val wordPredictor = WordPredictor(context)
+    
+    // Cache for key positions to avoid recalculating on every gesture point
+    private var cachedKeyPositions: Map<String, androidx.compose.ui.geometry.Rect>? = null
+    private var lastKeyPositionsUpdate = 0L
+    private val keyPositionsCacheTimeout = 1000L // 1 second cache timeout
+    
+    // Debouncing for predictions to avoid excessive API calls
+    private var lastPredictionTime = 0L
+    private val predictionDebounceMs = 50L // 50ms debounce
+    private var pendingPredictionJob: kotlinx.coroutines.Job? = null
+
     init {
         observeSettings()
         setupSuggestionDebouncing()
         observeClipboard()
+        initializeGlideTyping()
     }
 
     fun initializeText(text: String, cursorPosition: Int) {
@@ -179,6 +199,12 @@ class KeyboardViewModel(
         onKeyPressListener = listener
     }
 
+    fun setOnGestureFeedbackListener(listener: () -> Unit) {
+        onGestureFeedbackListener = listener
+    }
+
+    private var onGestureFeedbackListener: (() -> Unit)? = null
+
     fun setOnImeActionListener(listener: (Int) -> Unit) {
         onImeActionListener = listener
     }
@@ -219,6 +245,13 @@ class KeyboardViewModel(
             is KeyboardIntent.DeleteSelectedClipboardItems -> deleteSelectedClipboardItems()
             is KeyboardIntent.VoiceToTextPressed -> startVoiceRecognition()
             is KeyboardIntent.PasteFromClipboard -> pasteFromClipboard()
+
+            // Glide typing intents
+            is KeyboardIntent.GlideTypingStarted -> handleGlideTypingStarted(intent.startPosition)
+            is KeyboardIntent.GlideTypingMoved -> handleGlideTypingMoved(intent.position)
+            is KeyboardIntent.GlideTypingEnded -> handleGlideTypingEnded()
+            is KeyboardIntent.GlideTypingCancelled -> handleGlideTypingCancelled()
+            is KeyboardIntent.GlideTypingPredictionSelected -> handleGlideTypingPredictionSelected(intent.word)
         }
     }
 
@@ -1105,8 +1138,283 @@ class KeyboardViewModel(
         onTextChangeListener?.invoke(text, _uiState.value.keyboardState.cursorPosition)
         textChangeChannel.trySend(text)
     }
+
+    // Glide typing methods
+    private fun initializeGlideTyping() {
+        viewModelScope.launch {
+            try {
+                // Initialize with actual key positions
+                val keyPositions = getKeyPositions()
+                wordPredictor.initialize(keyPositions)
+            } catch (e: Exception) {
+                Log.e("KeyboardViewModel", "Failed to initialize word predictor", e)
+            }
+        }
+    }
+
+    /**
+     * Gets the current key positions for gesture detection
+     * This is a simplified implementation - in a real app you'd get actual positions from the UI
+     */
+    private fun getKeyPositions(): Map<String, androidx.compose.ui.geometry.Rect> {
+        // For now, return a basic QWERTY layout with estimated positions
+        // In a real implementation, you'd get actual measured positions from the keyboard UI
+        val keyWidth = 100f
+        val keyHeight = 48f
+        val keySpacing = 4f
+        val startX = 20f
+        val startY = 100f
+        
+        val positions = mutableMapOf<String, androidx.compose.ui.geometry.Rect>()
+        
+        // Top row: q w e r t y u i o p
+        val topRow = listOf("q", "w", "e", "r", "t", "y", "u", "i", "o", "p")
+        topRow.forEachIndexed { index, key ->
+            val x = startX + index * (keyWidth + keySpacing)
+            val y = startY
+            positions[key] = androidx.compose.ui.geometry.Rect(
+                left = x,
+                top = y,
+                right = x + keyWidth,
+                bottom = y + keyHeight
+            )
+        }
+        
+        // Middle row: a s d f g h j k l
+        val middleRow = listOf("a", "s", "d", "f", "g", "h", "j", "k", "l")
+        middleRow.forEachIndexed { index, key ->
+            val x = startX + 50f + index * (keyWidth + keySpacing) // Offset for QWERTY layout
+            val y = startY + keyHeight + keySpacing
+            positions[key] = androidx.compose.ui.geometry.Rect(
+                left = x,
+                top = y,
+                right = x + keyWidth,
+                bottom = y + keyHeight
+            )
+        }
+        
+        // Bottom row: z x c v b n m
+        val bottomRow = listOf("z", "x", "c", "v", "b", "n", "m")
+        bottomRow.forEachIndexed { index, key ->
+            val x = startX + 150f + index * (keyWidth + keySpacing) // Offset for QWERTY layout
+            val y = startY + 2 * (keyHeight + keySpacing)
+            positions[key] = androidx.compose.ui.geometry.Rect(
+                left = x,
+                top = y,
+                right = x + keyWidth,
+                bottom = y + keyHeight
+            )
+        }
+        
+        return positions
+    }
+
+    private fun handleGlideTypingStarted(startPosition: androidx.compose.ui.geometry.Offset) {
+        gestureDetector.startGesture(startPosition)
+        
+        // Log gesture start
+        Log.d("GlideTyping", "=== GESTURE STARTED ===")
+        Log.d("GlideTyping", "Start position: (${startPosition.x.toInt()}, ${startPosition.y.toInt()})")
+        
+        // Trigger feedback for gesture start
+        onGestureFeedbackListener?.invoke()
+        
+        updateKeyboardState {
+            copy(
+                glideTypingState = glideTypingState.copy(
+                    isActive = true,
+                    gesturePath = listOf(GesturePoint(startPosition, System.currentTimeMillis())),
+                    predictions = emptyList()
+                )
+            )
+        }
+    }
+
+    private fun handleGlideTypingMoved(position: androidx.compose.ui.geometry.Offset) {
+        val currentState = _uiState.value.keyboardState.glideTypingState
+        if (!currentState.isActive) return
+
+        // Check for gesture timeout before processing
+        if (gestureDetector.hasTimedOut()) {
+            Log.d("GlideTyping", "Gesture timed out, auto-completing")
+            handleGlideTypingEnded()
+            return
+        }
+
+        val pointAdded = gestureDetector.addPoint(position)
+        if (!pointAdded) {
+            // If point wasn't added due to timeout, end the gesture
+            if (gestureDetector.hasTimedOut()) {
+                Log.d("GlideTyping", "Gesture timed out during point addition, auto-completing")
+                handleGlideTypingEnded()
+                return
+            }
+        }
+        
+        val updatedPath = currentState.gesturePath + GesturePoint(position, System.currentTimeMillis())
+        
+        // Get cached key positions or update cache if needed
+        val keyPositions = getCachedKeyPositions()
+        val currentKey = gestureDetector.findNearestKey(position, keyPositions)
+        
+        // Log gesture position and detected key
+        Log.d("GlideTyping", "Position: (${position.x.toInt()}, ${position.y.toInt()}) -> Key: ${currentKey ?: "none"}")
+        
+        // Optimize highlighted keys calculation - only recalculate if path changed significantly
+        val highlightedKeys = if (updatedPath.size % 3 == 0 || currentKey != currentState.currentKey) {
+            // Only recalculate every 3rd point or when current key changes
+            val keys = mutableSetOf<String>()
+            updatedPath.takeLast(10).forEach { point -> // Only check last 10 points for performance
+                gestureDetector.findNearestKey(point.position, keyPositions)?.let { key ->
+                    keys.add(key)
+                }
+            }
+            
+            // Log the key sequence being built
+            if (keys.isNotEmpty()) {
+                Log.d("GlideTyping", "Key sequence: ${keys.joinToString(" -> ")}")
+            }
+            
+            keys
+        } else {
+            currentState.highlightedKeys + listOfNotNull(currentKey)
+        }
+        
+        // Update UI state immediately for smooth visual feedback
+        updateKeyboardState {
+            copy(
+                glideTypingState = glideTypingState.copy(
+                    gesturePath = updatedPath,
+                    highlightedKeys = highlightedKeys,
+                    currentKey = currentKey
+                )
+            )
+        }
+        
+        // Debounce predictions to avoid excessive API calls
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastPredictionTime > predictionDebounceMs && updatedPath.size > 2) {
+            lastPredictionTime = currentTime
+            
+            // Cancel any pending prediction job
+            pendingPredictionJob?.cancel()
+            
+            // Launch new prediction job with slight delay for debouncing
+            pendingPredictionJob = viewModelScope.launch {
+                kotlinx.coroutines.delay(predictionDebounceMs)
+                
+                val startTime = updatedPath.firstOrNull()?.timestamp ?: currentTime
+                val endTime = updatedPath.lastOrNull()?.timestamp ?: currentTime
+                val gesturePath = com.ai.keyboard.domain.model.GesturePath(
+                    points = updatedPath,
+                    startTime = startTime,
+                    endTime = endTime
+                )
+                
+                val predictions = wordPredictor.predictWords(gesturePath).map { it.word }
+                
+                // Only update if this is still the latest prediction request
+                if (!isActive) return@launch
+                
+                updateKeyboardState {
+                    copy(
+                        glideTypingState = glideTypingState.copy(
+                            predictions = predictions
+                        )
+                    )
+                }
+            }
+        }
+    }
+    
+    private fun getCachedKeyPositions(): Map<String, androidx.compose.ui.geometry.Rect> {
+        val currentTime = System.currentTimeMillis()
+        
+        // Return cached positions if they're still valid
+        if (cachedKeyPositions != null && currentTime - lastKeyPositionsUpdate < keyPositionsCacheTimeout) {
+            return cachedKeyPositions!!
+        }
+        
+        // Update cache
+        val positions = getKeyPositions()
+        cachedKeyPositions = positions
+        lastKeyPositionsUpdate = currentTime
+        
+        return positions
+    }
+
+    private fun handleGlideTypingEnded() {
+        val currentState = _uiState.value.keyboardState.glideTypingState
+        if (!currentState.isActive) return
+
+        // Log the complete gesture path before ending
+        val keyPositions = getCachedKeyPositions()
+        val keySequence = mutableListOf<String>()
+        currentState.gesturePath.forEach { point ->
+            gestureDetector.findNearestKey(point.position, keyPositions)?.let { key ->
+                if (keySequence.isEmpty() || keySequence.last() != key) {
+                    keySequence.add(key)
+                }
+            }
+        }
+        
+        Log.d("GlideTyping", "=== GESTURE COMPLETED ===")
+        Log.d("GlideTyping", "Total points: ${currentState.gesturePath.size}")
+        Log.d("GlideTyping", "Key sequence: ${keySequence.joinToString(" -> ")}")
+        Log.d("GlideTyping", "Highlighted keys: ${currentState.highlightedKeys.joinToString(", ")}")
+
+        val finalPath = gestureDetector.endGesture()
+        finalPath?.let { path ->
+            // Trigger feedback for successful gesture completion
+            onGestureFeedbackListener?.invoke()
+            
+            viewModelScope.launch {
+                val predictions = wordPredictor.predictWords(path)
+                
+                // Log predictions
+                Log.d("GlideTyping", "Predictions: ${predictions.map { it.word }.joinToString(", ")}")
+                
+                // Auto-select the best prediction if available
+                if (predictions.isNotEmpty()) {
+                    val bestPrediction = predictions.first()
+                    Log.d("GlideTyping", "Selected word: '${bestPrediction.word}' (confidence: ${bestPrediction.confidence})")
+                    insertSuggestion(bestPrediction.word)
+                }
+
+                updateKeyboardState {
+                    copy(
+                        glideTypingState = GlideTypingState() // Reset to default state
+                    )
+                }
+            }
+        } ?: run {
+            // No valid path, just reset state
+            updateKeyboardState {
+                copy(
+                    glideTypingState = GlideTypingState()
+                )
+            }
+        }
+    }
+
+    private fun handleGlideTypingCancelled() {
+        gestureDetector.cancelGesture()
+        updateKeyboardState {
+            copy(
+                glideTypingState = GlideTypingState() // Reset to default state
+            )
+        }
+    }
+
+    private fun handleGlideTypingPredictionSelected(word: String) {
+        // Trigger feedback for word selection
+        onGestureFeedbackListener?.invoke()
+        
+        insertSuggestion(word)
+        updateKeyboardState {
+            copy(
+                glideTypingState = GlideTypingState() // Reset to default state
+            )
+        }
+    }
 }
-
-
-
-

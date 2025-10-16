@@ -53,6 +53,7 @@ fun SymbolKeyboard(
                     text = char,
                     onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character(char))) },
                     mode = KeyboardMode.SYMBOLS,
+                    isGestureTypingActive = false, // Symbol keyboard doesn't support gesture typing
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -79,6 +80,7 @@ fun SymbolKeyboard(
                 text = "#",
                 onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character("#"))) },
                 mode = KeyboardMode.SYMBOLS,
+                isGestureTypingActive = false, // Symbol keyboard doesn't support gesture typing
                 modifier = Modifier.weight(1f)
             )
 
@@ -87,6 +89,7 @@ fun SymbolKeyboard(
                 displayText = "Space",
                 onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Space)) },
                 mode = KeyboardMode.SYMBOLS,
+                isGestureTypingActive = false, // Symbol keyboard doesn't support gesture typing
                 modifier = Modifier.weight(4f)
             )
 
@@ -94,6 +97,7 @@ fun SymbolKeyboard(
                 text = "%",
                 onClick = { onIntent(KeyboardIntent.KeyPressed(KeyAction.Character("%"))) },
                 mode = KeyboardMode.SYMBOLS,
+                isGestureTypingActive = false, // Symbol keyboard doesn't support gesture typing
                 modifier = Modifier.weight(1f)
             )
 

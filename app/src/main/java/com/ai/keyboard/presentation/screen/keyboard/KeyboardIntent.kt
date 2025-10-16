@@ -35,4 +35,11 @@ sealed class KeyboardIntent {
     data class ClipboardItemSelected(val item: ClipboardItem) : KeyboardIntent()
     data class ClipboardItemToggleSelect(val item: ClipboardItem) : KeyboardIntent()
     object DeleteSelectedClipboardItems : KeyboardIntent()
+
+    // Glide typing intents
+    data class GlideTypingStarted(val startPosition: androidx.compose.ui.geometry.Offset) : KeyboardIntent()
+    data class GlideTypingMoved(val position: androidx.compose.ui.geometry.Offset) : KeyboardIntent()
+    object GlideTypingEnded : KeyboardIntent()
+    object GlideTypingCancelled : KeyboardIntent()
+    data class GlideTypingPredictionSelected(val word: String) : KeyboardIntent()
 }
