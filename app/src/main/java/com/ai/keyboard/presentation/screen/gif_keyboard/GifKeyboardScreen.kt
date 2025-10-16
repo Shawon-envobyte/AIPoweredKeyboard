@@ -118,6 +118,7 @@ fun GifKeyboardScreen(
                         AsyncImage(
                             model = gif.previewUrl,
                             contentDescription = null,
+                            imageLoader = imageLoader,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .height(100.dp)
