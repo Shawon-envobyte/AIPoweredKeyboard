@@ -1,7 +1,9 @@
 package com.ai.keyboard.presentation.screen.keyboard
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.speech.RecognitionListener
@@ -69,9 +71,11 @@ class KeyboardViewModel(
     private val _uiState = MutableStateFlow(KeyboardUIState())
     val uiState: StateFlow<KeyboardUIState> = _uiState.asStateFlow()
 
-    private val textChangeChannel = Channel<String>(Channel.CONFLATED)
     private var speechRecognizer: SpeechRecognizer? = null
-    private val clipboardManager = AndroidClipboardManager(context)
+    private var permissionResultReceiver: BroadcastReceiver? = null
+
+    private val textChangeChannel = Channel<String>(Channel.CONFLATED)
+    private val clipboardManager by lazy { AndroidClipboardManager(KeyboardBridge.ime!!) }
 
     private var onTextChangeListener: ((String, Int) -> Unit)? = null
     private var onCursorChangeListener: ((Int) -> Unit)? = null
@@ -80,6 +84,7 @@ class KeyboardViewModel(
     private var onImeActionListener: ((Int) -> Unit)? = null
 
     private data class TextHistory(val text: String, val cursorPosition: Int)
+
     private val undoStack = mutableListOf<TextHistory>()
     private val redoStack = mutableListOf<TextHistory>()
 
@@ -268,7 +273,8 @@ class KeyboardViewModel(
             is KeyAction.Enter -> {
                 addStateToUndoStack(originalState)
                 characterToCommit = ""
-                currentText = StringBuilder(currentText).insert(cursorPosition, characterToCommit).toString()
+                currentText =
+                    StringBuilder(currentText).insert(cursorPosition, characterToCommit).toString()
             }
 
             is KeyAction.ImeAction -> {
@@ -700,9 +706,11 @@ class KeyboardViewModel(
                         quickReplyList = result.data
                     )
                 }
+
                 is ResultWrapper.Failure -> {
                     Log.e("QuickReplyModule", "QuickReply failed: ${result.message}")
                 }
+
                 else -> {
                     Log.e("QuickReplyModule", "Unexpected Error")
                 }
@@ -735,6 +743,47 @@ class KeyboardViewModel(
     private fun startVoiceRecognition() {
         val context = KeyboardBridge.ime ?: return
 
+
+        // Setup permission result receiver if not already done
+        if (permissionResultReceiver == null) {
+            permissionResultReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    when (intent?.action) {
+                        "com.ai.keyboard.AUDIO_PERMISSION_GRANTED" -> {
+                            // Permission granted, retry voice recognition
+                            startVoiceRecognition()
+                        }
+
+                        "com.ai.keyboard.AUDIO_PERMISSION_DENIED" -> {
+                            _uiState.update {
+                                it.copy(voiceRecognitionError = "Microphone permission is required for voice input")
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            val filter = IntentFilter().apply {
+                addAction("com.ai.keyboard.AUDIO_PERMISSION_GRANTED")
+                addAction("com.ai.keyboard.AUDIO_PERMISSION_DENIED")
+            }
+
+            try {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                    context.registerReceiver(
+                        permissionResultReceiver,
+                        filter,
+                        Context.RECEIVER_NOT_EXPORTED
+                    )
+                } else {
+                    context.registerReceiver(permissionResultReceiver, filter)
+                }
+            } catch (e: Exception) {
+                Log.e("KeyboardViewModel", "Failed to register permission receiver", e)
+            }
+        }
+
         // Check if audio permission is granted
         if (ContextCompat.checkSelfPermission(
                 context,
@@ -747,121 +796,149 @@ class KeyboardViewModel(
 
             _uiState.update {
                 it.copy(voiceRecognitionError = "Requesting audio permission...")
+                // For Android 15+, use a more direct approach
+                try {
+                    // Try to open the main activity to request permission
+                    val intent = Intent(
+                        context,
+                        com.ai.keyboard.presentation.MainActivity::class.java
+                    ).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        putExtra("REQUEST_AUDIO_PERMISSION", true)
+                    }
+                    context.startActivity(intent)
+                } catch (e: Exception) {
+                    // Fallback to broadcast
+                    val broadcastIntent = Intent("com.ai.keyboard.REQUEST_AUDIO_PERMISSION")
+                    broadcastIntent.setPackage(context.packageName) // Explicit package for Android 15
+                    context.sendBroadcast(broadcastIntent)
+                }
+
+                _uiState.update {
+                    it.copy(voiceRecognitionError = "Please grant microphone permission to use voice input")
+                }
+                return
             }
-            return
         }
-
-        // Check if speech recognition is available
-        if (!SpeechRecognizer.isRecognitionAvailable(context)) {
-            _uiState.update {
-                it.copy(voiceRecognitionError = "Speech recognition not available")
-            }
-            return
-        }
-
-        // Initialize speech recognizer
-        speechRecognizer?.destroy()
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
-
-        val recognitionListener = object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {
+            // Check if speech recognition is available
+            if (!SpeechRecognizer.isRecognitionAvailable(context)) {
                 _uiState.update {
-                    it.copy(
-                        isVoiceRecording = true,
-                        voiceRecognitionError = null
-                    )
+                    it.copy(voiceRecognitionError = "Speech recognition not available")
                 }
+                return
             }
 
-            override fun onBeginningOfSpeech() {}
+            // Initialize speech recognizer
+            speechRecognizer?.destroy()
+            speechRecognizer = SpeechRecognizer.createSpeechRecognizer(context)
 
-            override fun onRmsChanged(rmsdB: Float) {}
-
-            override fun onBufferReceived(buffer: ByteArray?) {}
-
-            override fun onEndOfSpeech() {
-                _uiState.update {
-                    it.copy(isVoiceRecording = false)
-                }
-            }
-
-            override fun onError(error: Int) {
-                val errorMessage = when (error) {
-                    SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
-                    SpeechRecognizer.ERROR_CLIENT -> "Client side error"
-                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Insufficient permissions"
-                    SpeechRecognizer.ERROR_NETWORK -> "Network error"
-                    SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout"
-                    SpeechRecognizer.ERROR_NO_MATCH -> "No speech input"
-                    SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Recognition service busy"
-                    SpeechRecognizer.ERROR_SERVER -> "Server error"
-                    SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech input"
-                    else -> "Unknown error"
+            val recognitionListener = object : RecognitionListener {
+                override fun onReadyForSpeech(params: Bundle?) {
+                    _uiState.update {
+                        it.copy(
+                            isVoiceRecording = true,
+                            voiceRecognitionError = null
+                        )
+                    }
                 }
 
-                _uiState.update {
-                    it.copy(
-                        isVoiceRecording = false,
-                        voiceRecognitionError = errorMessage
-                    )
+                override fun onBeginningOfSpeech() {}
+
+                override fun onRmsChanged(rmsdB: Float) {}
+
+                override fun onBufferReceived(buffer: ByteArray?) {}
+
+                override fun onEndOfSpeech() {
+                    _uiState.update {
+                        it.copy(isVoiceRecording = false)
+                    }
                 }
-            }
 
-            override fun onResults(results: Bundle?) {
-                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                val recognizedText = matches?.firstOrNull() ?: ""
+                override fun onError(error: Int) {
+                    val errorMessage = when (error) {
+                        SpeechRecognizer.ERROR_AUDIO -> "Audio recording error"
+                        SpeechRecognizer.ERROR_CLIENT -> "Client side error"
+                        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "Insufficient permissions"
+                        SpeechRecognizer.ERROR_NETWORK -> "Network error"
+                        SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "Network timeout"
+                        SpeechRecognizer.ERROR_NO_MATCH -> "No speech input"
+                        SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "Recognition service busy"
+                        SpeechRecognizer.ERROR_SERVER -> "Server error"
+                        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "No speech input"
+                        else -> "Unknown error"
+                    }
 
-                if (recognizedText.isNotEmpty()) {
-                    // Insert recognized text at cursor position
-                    val currentState = _uiState.value.keyboardState
-                    val newText = StringBuilder(currentState.currentText)
-                        .insert(currentState.cursorPosition, recognizedText)
-                        .toString()
+                    _uiState.update {
+                        it.copy(
+                            isVoiceRecording = false,
+                            voiceRecognitionError = errorMessage
+                        )
+                    }
+                }
 
-                    updateKeyboardState {
-                        copy(
-                            currentText = newText,
-                            cursorPosition = currentState.cursorPosition + recognizedText.length
+                override fun onResults(results: Bundle?) {
+                    val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    val recognizedText = matches?.firstOrNull() ?: ""
+
+                    if (recognizedText.isNotEmpty()) {
+                        // Insert recognized text at cursor position
+                        val currentState = _uiState.value.keyboardState
+                        val newText = StringBuilder(currentState.currentText)
+                            .insert(currentState.cursorPosition, recognizedText)
+                            .toString()
+
+                        updateKeyboardState {
+                            copy(
+                                currentText = newText,
+                                cursorPosition = currentState.cursorPosition + recognizedText.length
+                            )
+                        }
+
+                        // Notify text change
+                        onTextChangeListener?.invoke(
+                            newText,
+                            currentState.cursorPosition + recognizedText.length
                         )
                     }
 
-                    // Notify text change
-                    onTextChangeListener?.invoke(newText, currentState.cursorPosition + recognizedText.length)
+                    _uiState.update {
+                        it.copy(
+                            isVoiceRecording = false,
+                            voiceRecognitionText = recognizedText,
+                            voiceRecognitionError = null
+                        )
+                    }
                 }
 
-                _uiState.update {
-                    it.copy(
-                        isVoiceRecording = false,
-                        voiceRecognitionText = recognizedText,
-                        voiceRecognitionError = null
-                    )
+                override fun onPartialResults(partialResults: Bundle?) {
+                    val matches =
+                        partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                    val partialText = matches?.firstOrNull() ?: ""
+
+                    _uiState.update {
+                        it.copy(voiceRecognitionText = partialText)
+                    }
                 }
+
+                override fun onEvent(eventType: Int, params: Bundle?) {}
             }
 
-            override fun onPartialResults(partialResults: Bundle?) {
-                val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                val partialText = matches?.firstOrNull() ?: ""
+            speechRecognizer?.setRecognitionListener(recognitionListener)
 
-                _uiState.update {
-                    it.copy(voiceRecognitionText = partialText)
-                }
+            // Create recognition intent
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(
+                    RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                )
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
             }
 
-            override fun onEvent(eventType: Int, params: Bundle?) {}
-        }
+            // Start listening
+            speechRecognizer?.startListening(intent)
 
-        speechRecognizer?.setRecognitionListener(recognitionListener)
-
-        // Create recognition intent
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
-        }
-
-        // Start listening
-        speechRecognizer?.startListening(intent)
     }
 
     fun stopVoiceRecognition() {
@@ -900,6 +977,15 @@ class KeyboardViewModel(
     override fun onCleared() {
         super.onCleared()
         speechRecognizer?.destroy()
+
+        // Unregister permission receiver
+        permissionResultReceiver?.let { receiver ->
+            try {
+                KeyboardBridge.ime?.unregisterReceiver(receiver)
+            } catch (e: Exception) {
+                Log.e("KeyboardViewModel", "Failed to unregister permission receiver", e)
+            }
+        }
     }
 
 
@@ -1010,6 +1096,7 @@ class KeyboardViewModel(
         textChangeChannel.trySend(text)
     }
 }
+
 
 
 

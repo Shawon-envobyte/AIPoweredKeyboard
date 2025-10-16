@@ -56,11 +56,13 @@ class MainActivity : ComponentActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        if (isGranted) {
-            // Permission granted, voice recognition can proceed
+        val intent = if (isGranted) {
+            Intent("com.ai.keyboard.AUDIO_PERMISSION_GRANTED")
         } else {
-            // Permission denied, show message or handle accordingly
+            Intent("com.ai.keyboard.AUDIO_PERMISSION_DENIED")
         }
+        intent.setPackage(packageName)
+        sendBroadcast(intent)
     }
     
     private val permissionRequestReceiver = object : BroadcastReceiver() {
@@ -74,9 +76,18 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Register broadcast receiver for permission requests
+        // Check if we were launched to request permission
+        if (intent.getBooleanExtra("REQUEST_AUDIO_PERMISSION", false)) {
+            requestAudioPermission()
+        }
+        
+        // Register broadcast receiver for permission requests with explicit filter
         val filter = IntentFilter("com.ai.keyboard.REQUEST_AUDIO_PERMISSION")
-        registerReceiver(permissionRequestReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(permissionRequestReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(permissionRequestReceiver, filter)
+        }
         
         enableEdgeToEdge()
         setContent {
@@ -99,6 +110,15 @@ class MainActivity : ComponentActivity() {
         }
     }
     
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        
+        // Handle new intent for permission requests
+        if (intent.getBooleanExtra("REQUEST_AUDIO_PERMISSION", false)) {
+            requestAudioPermission()
+        }
+    }
+    
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(permissionRequestReceiver)
@@ -110,10 +130,17 @@ class MainActivity : ComponentActivity() {
                 this,
                 Manifest.permission.RECORD_AUDIO
             ) == PackageManager.PERMISSION_GRANTED -> {
-                // Permission already granted
+                // Permission already granted - notify keyboard service
+                val intent = Intent("com.ai.keyboard.AUDIO_PERMISSION_GRANTED")
+                intent.setPackage(packageName)
+                sendBroadcast(intent)
+            }
+            shouldShowRequestPermissionRationale(Manifest.permission.RECORD_AUDIO) -> {
+                // Show rationale and request permission
+                requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
             else -> {
-                // Request permission
+                // Request permission directly
                 requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
             }
         }

@@ -44,7 +44,7 @@ fun TranslateScreenContent(
 
 
         CustomToolbar(
-            title = stringResource(R.string.word_tone),
+            title = "Translate",
             onBackButtonClicked = onBackButtonClick,
             selectedLanguage = uiState.language,
             onLanguageSelected = { viewModel.onLanguageSelected(it) }
