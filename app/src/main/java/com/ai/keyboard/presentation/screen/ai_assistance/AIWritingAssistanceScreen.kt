@@ -45,7 +45,7 @@ fun AIWritingAssistanceScreenContent(
 
 
         CustomToolbar(
-            title = stringResource(R.string.fix_grammar),
+            title = "AI Writing Assistance",
             onBackButtonClicked = onBackButtonClick,
             selectedLanguage = uiState.language,
             onLanguageSelected = { viewModel.onLanguageSelected(it) }
