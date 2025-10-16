@@ -1,4 +1,4 @@
-package com.hashtag.generator.ai.post.writer.data.model
+package com.ai.keyboard.data.model
 
 import kotlinx.serialization.Serializable
 

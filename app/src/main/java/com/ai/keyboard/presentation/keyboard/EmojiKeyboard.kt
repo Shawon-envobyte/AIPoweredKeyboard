@@ -281,7 +281,11 @@ fun EmojiKeyboard(
                 modifier = Modifier.weight(1.5f)
             )
 
-            Spacer(modifier = Modifier.weight(4f))
+            SpecialKeyButton(
+                icon = "GIF",
+                onClick = { onIntent(KeyboardIntent.GifPressed) },
+                modifier = Modifier.weight(4f)
+            )
 
             BackspaceKey(
                 modifier = Modifier.weight(1.5f),

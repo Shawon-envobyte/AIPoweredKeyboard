@@ -11,6 +11,7 @@ sealed class KeyboardIntent {
     object ShiftPressed : KeyboardIntent()
     object SymbolPressed : KeyboardIntent()
     object EmojiPressed : KeyboardIntent()
+    object GifPressed : KeyboardIntent()
     object AlphabetPressed : KeyboardIntent()
     object ExtendedSymbolPressed : KeyboardIntent()
     data class ThemeChanged(val theme: KeyboardTheme) : KeyboardIntent()

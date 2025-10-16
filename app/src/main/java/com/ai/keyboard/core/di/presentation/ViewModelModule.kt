@@ -1,5 +1,6 @@
 package com.ai.keyboard.core.di.presentation
 
+import com.ai.keyboard.presentation.screen.gif_keyboard.GifKeyboardViewModel
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -7,5 +8,8 @@ import org.koin.dsl.module
 val viewModelModule = module {
     viewModel {
         KeyboardViewModel(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
+    }
+    viewModel {
+        GifKeyboardViewModel(get(), get(), get())
     }
 }

@@ -25,6 +25,7 @@ import com.ai.keyboard.presentation.keyboard.SymbolKeyboard
 import com.ai.keyboard.presentation.screen.ai_assistance.AIWritingAssistanceScreen
 import com.ai.keyboard.presentation.screen.clipboard.ClipboardScreen
 import com.ai.keyboard.presentation.screen.fix_grammar.FixGrammarScreen
+import com.ai.keyboard.presentation.screen.gif_keyboard.GifKeyboardScreen
 import com.ai.keyboard.presentation.screen.quick_reply.QuickReplyScreen
 import com.ai.keyboard.presentation.screen.translate.TranslateScreen
 import com.ai.keyboard.presentation.screen.word_tone.WordToneScreen
@@ -85,7 +86,7 @@ fun KeyboardScreen(
                 onClipboardClick = { viewModel.handleIntent(KeyboardIntent.AiAssistancePressed) },
                 onEmojiClick = { viewModel.handleIntent(KeyboardIntent.EmojiPressed) },
                 onDotClick = { viewModel.handleIntent(KeyboardIntent.ClipboardOpen) },
-                onMicClick = { 
+                onMicClick = {
                     if (uiState.isVoiceRecording) {
                         viewModel.stopVoiceRecognition()
                     } else {
@@ -134,6 +135,13 @@ fun KeyboardScreen(
 
                 KeyboardMode.EMOJI -> {
                     EmojiKeyboard(
+                        onIntent = { viewModel.handleIntent(it) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+                KeyboardMode.GIF -> {
+                    GifKeyboardScreen(
                         onIntent = { viewModel.handleIntent(it) },
                         modifier = Modifier.fillMaxWidth()
                     )
