@@ -30,11 +30,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil.ImageLoader
 import coil.compose.AsyncImage
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
+import com.ai.keyboard.R
 import com.ai.keyboard.presentation.screen.keyboard.KeyboardIntent
 import org.koin.androidx.compose.koinViewModel
 
@@ -117,13 +119,21 @@ fun GifKeyboardScreen(
                             model = gif.previewUrl,
                             contentDescription = null,
                             contentScale = ContentScale.Crop,
-                            imageLoader = imageLoader,
                             modifier = Modifier
                                 .height(100.dp)
                                 .fillMaxWidth()
                                 .clickable {
 
                                 }
+                        )
+                    }
+                    item {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_tenor_attribution),
+                            contentDescription = "Tenor attribution",
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(4.dp)
                         )
                     }
                 }
