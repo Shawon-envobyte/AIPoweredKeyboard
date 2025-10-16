@@ -95,18 +95,21 @@ fun KeyboardScreen(
                 }
             )
             Spacer(modifier = Modifier.height(4.dp))
-            SuggestionBar(
-                suggestions = suggestions,
-                onSuggestionClick = { suggestion ->
-                    viewModel.handleIntent(
-                        KeyboardIntent.SuggestionSelected(suggestion.text)
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(40.dp)
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
-            )
+
+            if (keyboardMode != KeyboardMode.EMOJI && keyboardMode != KeyboardMode.GIF) {
+                SuggestionBar(
+                    suggestions = suggestions,
+                    onSuggestionClick = { suggestion ->
+                        viewModel.handleIntent(
+                            KeyboardIntent.SuggestionSelected(suggestion.text)
+                        )
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(40.dp)
+                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(4.dp))
 
